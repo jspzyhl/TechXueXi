@@ -30,4 +30,4 @@ docker build \
     --tag "${IMAGE_TAG}" \
     .
 
-docker push
+docker push jspzyhl/techxuexi-amd64:developing
