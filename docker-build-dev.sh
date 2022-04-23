@@ -1,7 +1,7 @@
 #!/bin/bash
 # eg ./docker-build-dev.sh https://github.com/TechXueXi/TechXueXi.git developing  localhost:5000 arm64v8 Dockerfile_arm64v8.dev
 
-USESOURCE='https://github.com/TechXueXi/TechXueXi.git'
+USESOURCE='https://github.com/jspzyhl/TechXueXi.git'
 USEBRANCHE='developing'
 IMAGE_TAG="techxuexi/techxuexi-amd64:${USEBRANCHE}"
 PUSH_REGISTRY_URL='docker.io'
