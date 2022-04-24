@@ -5,7 +5,7 @@ USESOURCE='https://github.com/jspzyhl/TechXueXi.git'
 USEBRANCHE='developing'
 IMAGE_TAG="techxuexi/techxuexi-amd64:${USEBRANCHE}"
 PUSH_REGISTRY_URL='docker.io'
-DOCKER_FILE='Dockerfile.dev'
+DOCKER_FILE='Dockerfile'
 if [[ $1 ]]; then
     USESOURCE=$1
 fi
@@ -30,4 +30,4 @@ docker build \
     --tag "${IMAGE_TAG}" \
     .
 
-docker push jspzyhl/techxuexi-amd64:developing
+docker push

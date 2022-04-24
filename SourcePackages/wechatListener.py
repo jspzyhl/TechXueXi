@@ -4,6 +4,9 @@ import time
 from flask import Flask, request
 import requests
 import json
+from typing import *
+from threading import Thread
+from threading import Lock
 
 from selenium.webdriver.support import ui
 from pdlearn.config import cfg_get
@@ -12,12 +15,28 @@ from pdlearn.threads import MyThread
 from pdlearn import file
 import pandalearning as pdl
 
+
+class ThreadList:
+    def __init__(self):
+        self.threads: List[Thread] = []
+
+    def add(self, name_, func_, *args_):
+        self.threads.append(Thread(target=func_, name=name_, args=args_))
+
+    def run(self):
+        for t in self.threads:
+            t.start()
+        for t in self.threads:
+            t.join()
+
+
 app = Flask(__name__)
 appid = cfg_get("addition.wechat.appid", "")
 appsecret = cfg_get("addition.wechat.appsecret", "")
 token = cfg_get("addition.wechat.token", "")
 openid = cfg_get("addition.wechat.openid", "")
 wechat = WechatHandler()
+login_host = cfg_get('addition.wechat.autologin_host', '')
 
 
 class MessageInfo:
@@ -94,16 +113,16 @@ def wechat_init(msg: MessageInfo):
             {
                 "name": "我的",
                 "sub_button": [
-                        {
-                            "type": "click",
-                            "name": "今日积分",
-                            "key": "MENU_SCORE"
-                        },
                     {
-                            "type": "click",
-                            "name": "账号编码",
-                            "key": "MENU_OPENID"
-                            },
+                        "type": "click",
+                        "name": "今日积分",
+                        "key": "MENU_SCORE"
+                    },
+                    {
+                        "type": "click",
+                        "name": "账号编码",
+                        "key": "MENU_OPENID"
+                    },
                 ]
             }
         ]
@@ -126,7 +145,7 @@ def get_uid(oid):
     if wx_list:
         return wx_list[0]["accountId"]
     else:
-        return""
+        return ""
 
 
 def wechat_get_openid(msg: MessageInfo):
@@ -244,9 +263,9 @@ def wechat_update(msg: MessageInfo):
             res = "当前代码已经是最新的了"
         else:
             os.popen("cp -r /xuexi/code/TechXueXi/SourcePackages/* /xuexi")
-            res = "代码更新完成"+msg
+            res = "代码更新完成" + msg
     except Exception as e:
-        res = "更新失败："+str(e)
+        res = "更新失败：" + str(e)
     wechat.send_text(res)
 
 
@@ -288,6 +307,25 @@ def weixinInterface():
             return "success"
     else:
         return 'signature error'
+
+
+app2 = Flask(__name__)
+
+
+@app2.route("/post_token", methods=['POST'])
+def post_token_to_autologin():
+    url_ = login_host + '/wechat/set_token'
+
+    req_dat_ = json.loads(request.data)
+    refresh = True if req_dat_['refresh'] else False
+
+    tk_cache = wechat.get_access_token(refresh)
+    post_dat_ = {'token': tk_cache[0],
+                 'expire_time': tk_cache[1]
+                 }
+    requests.post(url=url_, data=json.dumps(post_dat_))
+    resp_dat_ = {'state': 'ok'}
+    return json.dumps(resp_dat_)
 
 
 if __name__ == '__main__':
