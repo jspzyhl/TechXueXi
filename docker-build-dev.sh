@@ -3,7 +3,7 @@
 
 USESOURCE='https://github.com/jspzyhl/TechXueXi.git'
 USEBRANCHE='developing'
-IMAGE_TAG="techxuexi/techxuexi-amd64:${USEBRANCHE}"
+IMAGE_TAG="hero92/techxuexi-amd64:${USEBRANCHE}"
 PUSH_REGISTRY_URL='docker.io'
 DOCKER_FILE='Dockerfile'
 if [[ $1 ]]; then
