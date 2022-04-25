@@ -1,7 +1,7 @@
 
 FROM python:3.7-slim
-ARG usesource="https://hub.fastgit.xyz/TechXueXi/TechXueXi.git"
-ARG usebranche="dev"
+ARG usesource="https://github.com/jspzyhl/TechXueXi.git"
+ARG usebranche="developing"
 ENV pullbranche=${usebranche}
 ENV Sourcepath=${usesource}
 RUN apt-get update

@@ -30,4 +30,4 @@ docker build \
     --tag "${IMAGE_TAG}" \
     .
 
-docker push
+
