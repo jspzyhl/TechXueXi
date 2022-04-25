@@ -36,7 +36,6 @@ appsecret = cfg_get("addition.wechat.appsecret", "")
 token = cfg_get("addition.wechat.token", "")
 openid = cfg_get("addition.wechat.openid", "")
 wechat = WechatHandler()
-login_host = cfg_get('addition.wechat.autologin_host', '')
 
 
 class MessageInfo:
@@ -312,21 +311,28 @@ def weixinInterface():
 app2 = Flask(__name__)
 
 
-@app2.route("/post_token", methods=['POST'])
+@app2.route("/token_request", methods=['POST'])
 def post_token_to_autologin():
-    url_ = login_host + '/wechat/set_token'
-
     req_dat_ = json.loads(request.data)
-    refresh = True if req_dat_['refresh'] else False
+    if req_dat_['refresh']:
+        wechat.get_access_token(True)
+    else:
+        Thread(name='post_token_app2', target=wechat.post_token).start()
 
-    tk_cache = wechat.get_access_token(refresh)
-    post_dat_ = {'token': tk_cache[0],
-                 'expire_time': tk_cache[1]
-                 }
-    requests.post(url=url_, data=json.dumps(post_dat_))
     resp_dat_ = {'state': 'ok'}
     return json.dumps(resp_dat_)
 
 
+def run_app1():
+    app.run('0.0.0.0', 8088)
+
+
+def run_app2():
+    app2.run('0.0.0.0', 8098)
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8088)
+    th_list = ThreadList()
+    th_list.add('app1', run_app1)
+    th_list.add('app2', run_app2)
+    th_list.run()

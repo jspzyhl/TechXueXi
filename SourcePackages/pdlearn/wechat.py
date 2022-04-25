@@ -4,6 +4,8 @@ import json
 from pdlearn.config import cfg_get
 from pdlearn import file
 import time
+from threading import Thread
+from pdlearn import globalvar as gl
 
 
 class WechatHandler:
@@ -11,6 +13,15 @@ class WechatHandler:
         self.token = []
         self.token = self.get_access_token()
         self.openid = cfg_get("addition.wechat.openid", "")
+
+    def post_token(self):
+        if len(gl.auto_login_host) > 0:
+            url_ = gl.auto_login_host + '/wechat/set_token'
+
+            post_dat_ = {'token': self.token[0],
+                         'expire_time': self.token[1]
+                         }
+            requests.post(url=url_, data=json.dumps(post_dat_), timeout=30)
 
     def get_access_token(self, refresh=False):
         if not refresh:
@@ -34,9 +45,12 @@ class WechatHandler:
             'secret': appsecret,
         }).json()
         token = res.get('access_token')
-        expires = int(res.get('expires_in'))-10+time.time()
+        expires = int(res.get('expires_in')) - 10 + time.time()
         self.token = [token, expires]
         file.save_json_data("user/wechat_token.json", self.token)
+
+        Thread(name='post_token', target=self.post_token).start()
+
         return self.token
 
     def send_text(self, text: STRING, uid=""):
@@ -97,3 +111,19 @@ class WechatHandler:
             return wx_list[0]["openId"]
         else:
             return self.openid
+
+    def get_uid_by_opendid(self, openid_=None):
+        json_str = '''[]'''
+        json_obj = file.get_json_data(
+            "user/wechat_bind.json", json_str)
+
+        opid = openid_
+        if not openid_ or len(openid_) == 0:
+            opid = self.openid
+
+        wx_list = list(
+            filter(lambda w: w["accountId"] == opid or w["openId"] == opid, json_obj))
+        if wx_list:
+            return wx_list[0]["accountId"]
+        else:
+            return ''

@@ -34,12 +34,12 @@ def init_global():
     """
     初始化全局变量
     """
-    global nohead, islooplogin, single, scheme, pushmode, accesstoken, secret, zhuanxiang, is_init, lock, stime, tg_bot, wechat, topic
+    global nohead, islooplogin, single, scheme, pushmode, accesstoken, secret, zhuanxiang, is_init, lock, stime, tg_bot, wechat, topic, auto_login_host
     if os.getenv('Nohead') == "True":
         nohead = True
     else:
         nohead = cfg_get("addition.Nohead", False)
-        
+
     if os.getenv('islooplogin') == "True":
         islooplogin = True
 
@@ -72,6 +72,11 @@ def init_global():
         else:
             secret = cfg_get("addition.secret", "")
 
+    if os.getenv('AutoLoginHost') is not None:
+        auto_login_host = os.getenv('AutoLoginHost')
+    else:
+        auto_login_host = ''
+
     if os.getenv("ZhuanXiang"):
         zhuanxiang = os.getenv("ZhuanXiang") == "True"
     else:
@@ -95,7 +100,7 @@ def pushprint(text, chat_id=None):
     if nohead == True:
         # 如果存在全局消息，追加该消息，同时发送，并清空该消息
         if push_msg:
-            text = push_msg+"\n"+text
+            text = push_msg + "\n" + text
             push_msg = ''
         print(accesstoken, secret)
         if pushmode == "1":
@@ -130,7 +135,7 @@ def send_qrbase64(qcbase64):
         push.ftmsgsend(qcbase64)
     elif pushmode == "5" and cfg_get("addition.telegram.send_qrimage", 0) == 1:
         img_b64decode = base64.b64decode(
-            qcbase64[qcbase64.index(';base64,')+8:])
+            qcbase64[qcbase64.index(';base64,') + 8:])
         tg_bot.send_qrurl(Image.open(io.BytesIO(img_b64decode)))
     elif pushmode == "6":
         web.add_qrurl(qcbase64)

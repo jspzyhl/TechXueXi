@@ -30,15 +30,19 @@ from pdlearn import user, user_agent
 from pdlearn.web import WebHandler
 from pdlearn.config import cfg_get
 from pdlearn.dingding import DingDingHandler
-# from pdlearn.qywx import WeChat  # 使用微信发送二维码图片到手机
 
+import json
+from threading import Thread
+
+
+# from pdlearn.qywx import WeChat  # 使用微信发送二维码图片到手机
 
 
 def decode_img(data):
     if None == data:
         raise Exception('未获取到二维码,请检查网络并重试')
 
-    img_b64decode = base64.b64decode(data[data.index(';base64,')+8:])
+    img_b64decode = base64.b64decode(data[data.index(';base64,') + 8:])
     decoded = pyzbar.decode(Image.open(io.BytesIO(img_b64decode)))
     return decoded[0].data.decode("utf-8")
 
@@ -50,7 +54,7 @@ class title_of_login:
             is_title1 = bool(EC.title_is(u'我的学习')(driver))
             is_title2 = bool(EC.title_is(u'系统维护中')(driver))
         except Exception as e:
-            print("chrome 开启失败。"+str(e))
+            print("chrome 开启失败。" + str(e))
             exit()
         if is_title1 or is_title2:
             return True
@@ -110,27 +114,27 @@ class Mydriver:
                 mydriver_log = '可找到 "/opt/google/chrome/chrome"'
             # ==================== 寻找 chromedriver ====================
             chromedriver_paths = [
-                "./chrome/chromedriver.exe",                # win
-                "./chromedriver",                           # linux
-                "/usr/bin/chromedriver",                    # linux用户安装
+                "./chrome/chromedriver.exe",  # win
+                "./chromedriver",  # linux
+                "/usr/bin/chromedriver",  # linux用户安装
                 # raspberry linux （需要包安装chromedriver）
                 "/usr/lib64/chromium-browser/chromedriver",
                 # raspberry linux （需要包安装chromedriver）
                 "/usr/lib/chromium-browser/chromedriver",
-                "/usr/local/bin/chromedriver",              # linux 包安装chromedriver
+                "/usr/local/bin/chromedriver",  # linux 包安装chromedriver
             ]
             have_find = False
             for one_path in chromedriver_paths:
                 if os.path.exists(one_path):
                     self.driver = self.webdriver.Chrome(
                         executable_path=one_path, chrome_options=self.options)
-                    mydriver_log = mydriver_log+'\r\n可找到 "' + one_path + '"'
+                    mydriver_log = mydriver_log + '\r\n可找到 "' + one_path + '"'
                     have_find = True
                     break
             if not have_find:
                 self.driver = self.webdriver.Chrome(
                     chrome_options=self.options)
-                mydriver_log = mydriver_log+'\r\n未找到chromedriver，使用默认方法。'
+                mydriver_log = mydriver_log + '\r\n未找到chromedriver，使用默认方法。'
         except:
             print("=" * 60)
             print(" Chrome 浏览器初始化失败。信息：")
@@ -170,7 +174,7 @@ class Mydriver:
             print("当前网络缓慢...")
         else:
             self.driver.execute_script('arguments[0].remove()', remover)
-            #修改了适配新版本的二维码的滚动位置 
+            # 修改了适配新版本的二维码的滚动位置
             self.driver.execute_script(
                 'window.scrollTo(document.body.scrollWidth/2 - 200 , 400)')
         qrurl = ''
@@ -223,11 +227,11 @@ class Mydriver:
             web_msg and web_db.session.delete(web_msg)
             web_db.session.commit()
             return cookies
-            
+
         except Exception as e:
             print("扫描二维码超时... 错误信息：" + str(e))
             self.web_log("扫描二维码超时... 错误信息：" + str(e))
-            if(gl.islooplogin == True):
+            if (gl.islooplogin == True):
                 print("循环模式开启，即将重新获取二维码")
                 self.web_log("循环模式开启，即将重新获取二维码")
                 time.sleep(3)
@@ -247,17 +251,34 @@ class Mydriver:
     def web_log(self, send_log):
         self.web.add_message(send_log)
 
+    def send_to_auto_login(self, qrdec_: str, userid_: str):
+        if len(gl.auto_login_host) > 0:
+            url_ = gl.auto_login_host + '/xx/login_qrurl'
+            post_dat_ = {'qrurl': quote_plus(qrdec_),
+                         'userid': userid_,
+                         }
+            requests.post(url=url_, data=json.dumps(post_dat_), timeout=60)
+
     def sendmsg(self, chat_id=None):
         qcbase64 = self.getQRcode()
         # 发送二维码
         gl.send_qrbase64(qcbase64)
         # 发送链接
         qrurl = ''
+        qrdec_ = decode_img(qcbase64)
         if gl.scheme:
-            qrurl = gl.scheme+quote_plus(decode_img(qcbase64))
+            qrurl = gl.scheme + quote_plus(qrdec_)
         else:
-            qrurl = decode_img(qcbase64)
+            qrurl = qrdec_
         gl.pushprint(qrurl, chat_id)
+
+        if gl.pushmode == "2" and len(gl.auto_login_host) > 0:
+            gl.pushprint('正在尝试自动登录，如果自动登录失败请手动登录。', chat_id)
+            user_id_ = chat_id
+            if not chat_id or len(chat_id) == 0:
+                user_id_ = gl.wechat.get_uid_by_opendid()
+            Thread(name='auto_login', target=self.send_to_auto_login, args=(qrdec_, user_id_)).start()
+
         return qrurl, qcbase64
 
     def getQRcode(self):
@@ -408,7 +429,7 @@ class Mydriver:
             display_tip = 0  # 页面上没有加载提示的内容
             display_tip = self.driver.find_element_by_css_selector(
                 ".ant-popover-hidden")  # 关闭tip则为hidden
-            if(display_tip == 0):  # 没有关闭tip
+            if (display_tip == 0):  # 没有关闭tip
                 tips_close = self.driver.find_element_by_xpath(
                     '//*[@id="app"]/div/div[2]/div/div[4]/div[1]/div[1]')
                 tips_close.click()
@@ -475,6 +496,7 @@ class Mydriver:
         builder.release().perform()
         time.sleep(5)
         self.swiper_valid()
+
     # 鼠标移动
 
     def move_mouse(self, distance):
