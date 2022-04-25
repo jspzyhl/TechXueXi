@@ -3,7 +3,7 @@
 
 USESOURCE='https://github.com/jspzyhl/TechXueXi.git'
 USEBRANCHE='developing'
-IMAGE_TAG="hero92/techxuexi-amd64:${USEBRANCHE}"
+IMAGE_TAG="jspzyhl/techxuexi-amd64:${USEBRANCHE}"
 PUSH_REGISTRY_URL='docker.io'
 DOCKER_FILE='Dockerfile'
 if [[ $1 ]]; then
@@ -17,7 +17,7 @@ if [[ $3 ]]; then
     IMAGE_TAG=${PUSH_REGISTRY_URL}/${IMAGE_TAG}
 fi
 if [[ $4 ]]; then
-    IMAGE_TAG="techxuexi/techxuexi-$4:${USEBRANCHE}"
+    IMAGE_TAG="jspzyhl/techxuexi-$4:${USEBRANCHE}"
 fi
 if [[ $5 ]]; then
     DOCKER_FILE=$5
