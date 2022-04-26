@@ -251,11 +251,11 @@ class Mydriver:
     def web_log(self, send_log):
         self.web.add_message(send_log)
 
-    def send_to_auto_login(self, qrdec_: str, userid_: str):
+    def send_to_auto_login(self, qrdec_: str, openid_: str):
         if len(gl.auto_login_host) > 0:
             url_ = gl.auto_login_host + '/xx/login_qrurl'
             post_dat_ = {'qrurl': quote_plus(qrdec_),
-                         'userid': userid_,
+                         'openid': openid_,
                          }
             requests.post(url=url_, data=json.dumps(post_dat_), timeout=60)
 
@@ -274,10 +274,8 @@ class Mydriver:
 
         if gl.pushmode == "2" and len(gl.auto_login_host) > 0:
             gl.pushprint('正在尝试自动登录，如果自动登录失败请手动登录。', chat_id)
-            user_id_ = chat_id
-            if not chat_id or len(chat_id) == 0:
-                user_id_ = gl.wechat.get_uid_by_opendid()
-            Thread(name='auto_login', target=self.send_to_auto_login, args=(qrdec_, user_id_)).start()
+            openid_ = gl.wechat.get_opendid_by_uid(chat_id)
+            Thread(name='auto_login', target=self.send_to_auto_login, args=(qrdec_, openid_)).start()
 
         return qrurl, qcbase64
 

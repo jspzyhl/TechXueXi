@@ -28,6 +28,7 @@ tg_bot = TelegarmHandler
 wechat = WechatHandler
 web = WebHandler()
 push_msg = ""
+auto_login_host = ''
 
 
 def init_global():

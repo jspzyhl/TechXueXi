@@ -15,13 +15,16 @@ class WechatHandler:
         self.token = []
         self.token = self.get_access_token()
         self.openid = cfg_get("addition.wechat.openid", "")
+        self.appid = cfg_get("addition.wechat.appid", "")
+        self.appsecret = cfg_get("addition.wechat.appsecret", "")
 
     def post_token(self):
         if len(pdlearn.globalvar.auto_login_host) > 0:
             url_ = pdlearn.globalvar.auto_login_host + '/wechat/set_token'
 
             post_dat_ = {'token': self.token[0],
-                         'expire_time': self.token[1]
+                         'expire_time': self.token[1],
+                         'appid': self.appid,
                          }
             requests.post(url=url_, data=json.dumps(post_dat_), timeout=30)
 
@@ -38,13 +41,11 @@ class WechatHandler:
                 self.token = token_json_obj
                 return self.token
         # 获取新token
-        appid = cfg_get("addition.wechat.appid", "")
-        appsecret = cfg_get("addition.wechat.appsecret", "")
         url_token = 'https://api.weixin.qq.com/cgi-bin/token?'
         res = requests.get(url=url_token, params={
             "grant_type": 'client_credential',
-            'appid': appid,
-            'secret': appsecret,
+            'appid': self.appid,
+            'secret': self.appsecret,
         }).json()
         token = res.get('access_token')
         expires = int(res.get('expires_in')) - 10 + time.time()

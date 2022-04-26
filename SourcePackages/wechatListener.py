@@ -14,6 +14,7 @@ from pdlearn.wechat import WechatHandler
 from pdlearn.threads import MyThread
 from pdlearn import file
 import pandalearning as pdl
+from pdlearn import globalvar as gl
 
 
 class ThreadList:
@@ -184,7 +185,7 @@ def wechat_help(msg: MessageInfo):
     获取帮助菜单
     """
     return msg.returnXml(
-        "/help 显示帮助消息\n/init 初始化订阅号菜单，仅需要执行一次\n/add 添加新账号\n/bind 绑定账号，如：/bind 账号编码 学xi编号\n/unbind 解除绑定 如：/unbind 账号编码\n/list 获取全部账号信息\n/update 更新程序")
+        "/help 显示帮助消息\n/init 初始化订阅号菜单，仅需要执行一次\n/add 添加新账号\n/bind 绑定账号，如：/bind 账号编码 学xi编号\n/unbind 解除绑定 如：/unbind 账号编码\n/list 获取全部账号信息\n/update 更新程序\n/addaccount 添加自动扫码账号\n/authcode 提交短信验证码")
 
 
 def wechat_add():
@@ -268,6 +269,57 @@ def wechat_update(msg: MessageInfo):
     wechat.send_text(res)
 
 
+def wechat_addaccount(msg: MessageInfo):
+    """
+    登录xx账号
+    """
+    args = msg.content.split(" ")
+    if len(args) == 3:
+        phonenum_ = args[1]
+        password_ = args[2]
+        if len(gl.auto_login_host) > 0:
+            url_ = gl.auto_login_host + '/xx/add_account'
+
+            post_dat_ = {'phonenum': phonenum_,
+                         'password': password_,
+                         'openid': msg.from_user_name,
+                         }
+            try:
+                respon_ = requests.post(url=url_, data=json.dumps(post_dat_), timeout=270).json()
+                login_result_ = respon_['login_result']
+                if login_result_ == 'success':
+                    return msg.returnXml("登录成功")
+                elif login_result_ == 'auth_code':
+                    return msg.returnXml('需要验证，请发送“/authcode 验证码” 提交短信验证码')
+            except Exception as e:
+                return msg.returnXml('登录失败，出现错误。')
+        else:
+            return msg.returnXml('登录失败，未设置自动登录服务')
+    else:
+        return msg.returnXml("参数格式错误，正确格式：/addaccount 手机号码 密码")
+
+
+def wechat_authcode(msg: MessageInfo):
+    """
+    提交验证码
+    """
+    args = msg.content.split(" ")
+    if len(args) == 2:
+        authcode_ = args[1]
+        if len(gl.auto_login_host) > 0:
+            url_ = gl.auto_login_host + '/xx/set_auth_code'
+
+            post_dat_ = {'auth_code': authcode_,
+                         'openid': msg.from_user_name,
+                         }
+            try:
+                requests.post(url=url_, data=json.dumps(post_dat_), timeout=60).json()
+            except Exception as e:
+                return msg.returnXml('出现错误，提交失败。')
+    else:
+        return msg.returnXml("参数格式错误，正确格式：“/authcode 验证码”")
+
+
 @app.route('/wechat', methods=['GET', 'POST'])
 def weixinInterface():
     if check_signature:
@@ -298,11 +350,14 @@ def weixinInterface():
                 if msg.content.startswith("/list"):
                     MyThread("wechat_list", wechat_list, msg).start()
                 if msg.content.startswith("/learn"):
-                    MyThread("wechat_admin_learn",
-                             wechat_admin_learn, msg).start()
+                    MyThread("wechat_admin_learn", wechat_admin_learn, msg).start()
                 if msg.content.startswith("/update"):
-                    MyThread("wechat_update",
-                             wechat_update, msg).start()
+                    MyThread("wechat_update", wechat_update, msg).start()
+                if msg.content.startswith("/addaccount"):
+                    MyThread("addaccount", wechat_addaccount, msg).start()
+                if msg.content.startswith("/authcode"):
+                    MyThread("authcode", wechat_authcode, msg).start()
+
             return "success"
     else:
         return 'signature error'
