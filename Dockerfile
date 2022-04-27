@@ -10,9 +10,10 @@ ENV TZ=Asia/Shanghai
 ENV AccessToken=
 ENV Secret=
 ENV Nohead=True
-ENV Pushmode=1
+ENV Pushmode=2
 ENV islooplogin=False
 ENV CRONTIME="30 9 * * *"
+ENV AutoLoginHost=
 # RUN rm -f /xuexi/config/*; ls -la
 COPY requirements.txt /xuexi/requirements.txt
 COPY run.sh /xuexi/run.sh 

@@ -35,7 +35,8 @@ def init_global():
     """
     初始化全局变量
     """
-    global nohead, islooplogin, single, scheme, pushmode, accesstoken, secret, zhuanxiang, is_init, lock, stime, tg_bot, wechat, topic, auto_login_host
+    global nohead, islooplogin, single, scheme, pushmode, accesstoken, secret, zhuanxiang, is_init, lock, stime, \
+        tg_bot, wechat, topic, auto_login_host
     if os.getenv('Nohead') == "True":
         nohead = True
     else:
