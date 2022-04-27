@@ -13,10 +13,10 @@ class WechatHandler:
     def __init__(self):
 
         self.token = []
-        self.token = self.get_access_token()
         self.openid = cfg_get("addition.wechat.openid", "")
         self.appid = cfg_get("addition.wechat.appid", "")
         self.appsecret = cfg_get("addition.wechat.appsecret", "")
+        self.token = self.get_access_token()
 
     def post_token(self):
         if len(pdlearn.globalvar.auto_login_host) > 0:
