@@ -27,9 +27,10 @@ class WechatHandler:
                          'appid': self.appid,
                          }
             requests.post(url=url_, data=json.dumps(post_dat_), timeout=30)
+        else:
+            print('pdlearn.globalvar.auto_login_host = "" ')
 
     def get_access_token(self, refresh=False):
-        print(self.appid)
         if not refresh:
             # 检查变量
             if self.token and self.token[1] > time.time():
