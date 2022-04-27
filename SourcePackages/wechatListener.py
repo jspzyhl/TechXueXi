@@ -289,6 +289,7 @@ def wechat_login(msg: MessageInfo):
                              }
                 try:
                     respon_ = requests.post(url=url_, data=json.dumps(post_dat_), timeout=270).json()
+                    print(respon_)
                     login_result_ = respon_['login_result']
                     if login_result_ == 'success':
                         return msg.returnXml("登录成功")
