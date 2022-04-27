@@ -299,8 +299,7 @@ def wechat_login(msg: MessageInfo):
                              'password': password_,
                              'openid': msg.from_user_name,
                              }
-                MyThread('login_xx', login_xx, [url_, post_dat_]).start()
-
+                Thread(name='login_xx', target=login_xx, args=[url_, post_dat_]).start()
             else:
                 return msg.returnXml('登录失败，未设置自动登录服务')
         else:
