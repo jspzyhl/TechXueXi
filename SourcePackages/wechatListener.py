@@ -271,6 +271,18 @@ def is_valid_user(openid_: str) -> bool:
         return False
 
 
+def login_xx(url_, post_dat_):
+    try:
+        respon_ = requests.post(url=url_, data=json.dumps(post_dat_), timeout=270).json()
+        login_result_ = respon_['login_result']
+        if login_result_ == 'success':
+            print("登录成功")
+        elif login_result_ == 'auth_code':
+            print('需要验证，请发送“/authcode 验证码” 提交短信验证码')
+    except Exception as e:
+        print('登录失败，出现错误。')
+
+
 def wechat_login(msg: MessageInfo):
     """
     登录xx账号
@@ -287,16 +299,8 @@ def wechat_login(msg: MessageInfo):
                              'password': password_,
                              'openid': msg.from_user_name,
                              }
-                try:
-                    print(post_dat_)
-                    respon_ = requests.post(url=url_, data=json.dumps(post_dat_), timeout=270).json()
-                    login_result_ = respon_['login_result']
-                    if login_result_ == 'success':
-                        return msg.returnXml("登录成功")
-                    elif login_result_ == 'auth_code':
-                        return msg.returnXml('需要验证，请发送“/authcode 验证码” 提交短信验证码')
-                except Exception as e:
-                    return msg.returnXml('登录失败，出现错误。')
+                MyThread('login_xx', login_xx, (url_, post_dat_)).start()
+
             else:
                 return msg.returnXml('登录失败，未设置自动登录服务')
         else:
@@ -406,7 +410,8 @@ def weixinInterface():
                 # if msg.content.startswith("/update"):
                 #     MyThread("wechat_update", wechat_update, msg).start()
                 if msg.content.startswith("/login"):
-                    MyThread("login", wechat_login, msg).start()
+                    # MyThread("login", wechat_login, msg).start()
+                    return wechat_login(msg)
                 if msg.content.startswith("/authcode"):
                     MyThread("authcode", wechat_authcode, msg).start()
                 if msg.content.startswith("/grant"):
