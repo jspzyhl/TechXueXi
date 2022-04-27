@@ -446,6 +446,7 @@ def token_request():
 
 
 def run_app1():
+    gl.init_global()
     app.run('0.0.0.0', 8088)
 
 
