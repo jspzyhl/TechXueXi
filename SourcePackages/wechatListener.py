@@ -300,6 +300,7 @@ def wechat_login(msg: MessageInfo):
                              'openid': msg.from_user_name,
                              }
                 Thread(name='login_xx', target=login_xx, args=[url_, post_dat_]).start()
+                return None
             else:
                 return msg.returnXml('登录失败，未设置自动登录服务')
         else:
@@ -409,8 +410,9 @@ def weixinInterface():
                 # if msg.content.startswith("/update"):
                 #     MyThread("wechat_update", wechat_update, msg).start()
                 if msg.content.startswith("/login"):
-                    # MyThread("login", wechat_login, msg).start()
-                    return wechat_login(msg)
+                    msg_ = wechat_login(msg)
+                    if msg_:
+                        return msg_
                 if msg.content.startswith("/authcode"):
                     MyThread("authcode", wechat_authcode, msg).start()
                 if msg.content.startswith("/grant"):
