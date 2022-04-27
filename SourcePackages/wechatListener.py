@@ -174,7 +174,7 @@ def wechat_help(msg: MessageInfo):
     获取帮助菜单
     """
     return msg.returnXml(
-        "/help 显示帮助消息\n/init 初始化订阅号菜单，仅需要执行一次\n/add 添加新账号\n/bind 绑定账号，如：/bind 账号编码 学xi编号\n/unbind 解除绑定 如：/unbind 账号编码\n/list 获取全部账号信息\n/update 更新程序\n/addaccount 添加自动扫码账号\n/authcode 提交短信验证码\n/grant 授权微信账号\n/revoke 撤销微信账号")
+        "/help 显示帮助消息\n/init 初始化订阅号菜单，仅需要执行一次\n/add 添加新账号\n/bind 绑定账号，如：/bind 账号编码 学xi编号\n/unbind 解除绑定 如：/unbind 账号编码\n/list 获取全部账号信息\n/update 更新程序\n/login 添加自动扫码账号\n/authcode 提交短信验证码\n/grant 授权微信账号\n/revoke 撤销微信账号")
 
 
 def wechat_add():
@@ -271,7 +271,7 @@ def is_valid_user(openid_: str) -> bool:
         return False
 
 
-def wechat_addaccount(msg: MessageInfo):
+def wechat_login(msg: MessageInfo):
     """
     登录xx账号
     """
@@ -299,7 +299,7 @@ def wechat_addaccount(msg: MessageInfo):
             else:
                 return msg.returnXml('登录失败，未设置自动登录服务')
         else:
-            return msg.returnXml("参数格式错误，正确格式：/addaccount 手机号码 密码")
+            return msg.returnXml("参数格式错误，正确格式：/login 手机号码 密码")
     else:
         return msg.returnXml("当前微信号没有执行此命令的权限，请联系管理员授权")
 
@@ -382,7 +382,7 @@ def weixinInterface():
                 if msg.event_key == "MENU_LEARN":
                     uid_ = get_uid(msg.from_user_name)
                     if not uid_:
-                        return msg.returnXml("初次使用，请发送 “/addaccount 手机号码 密码” 进行账号登录")
+                        return msg.returnXml("初次使用，请发送 “/login 手机号码 密码” 进行账号登录")
                     else:
                         MyThread("wechat_learn", pdl.start, uid_).start()
                 if msg.event_key == "MENU_SCORE":
@@ -404,8 +404,8 @@ def weixinInterface():
                     MyThread("wechat_admin_learn", wechat_admin_learn, msg).start()
                 # if msg.content.startswith("/update"):
                 #     MyThread("wechat_update", wechat_update, msg).start()
-                if msg.content.startswith("/addaccount"):
-                    MyThread("addaccount", wechat_addaccount, msg).start()
+                if msg.content.startswith("/login"):
+                    MyThread("login", wechat_login, msg).start()
                 if msg.content.startswith("/authcode"):
                     MyThread("authcode", wechat_authcode, msg).start()
                 if msg.content.startswith("/grant"):

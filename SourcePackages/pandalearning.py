@@ -61,7 +61,7 @@ def start_learn(uid, name):
         msg = ""
         if name == "新用户":
             if len(gl.auto_login_host) > 0 and gl.pushmode == "2":
-                msg = '初次使用，请发送 “/addaccount 手机号码 密码” 进行账号登录'
+                # msg = '初次使用，请发送 “/login 手机号码 密码” 进行账号登录'
                 return
             else:
                 msg = "需要增加新用户，请扫码登录，否则请无视"
