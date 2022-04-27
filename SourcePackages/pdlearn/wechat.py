@@ -5,12 +5,16 @@ from pdlearn.config import cfg_get
 from pdlearn import file
 import time
 from threading import Thread
-import pdlearn
+import os
 
 
 class WechatHandler:
 
     def __init__(self):
+        if os.getenv('AutoLoginHost') is not None:
+            self.auto_login_host = os.getenv('AutoLoginHost')
+        else:
+            self.auto_login_host = ''
 
         self.token = []
         self.openid = cfg_get("addition.wechat.openid", "")
@@ -19,8 +23,8 @@ class WechatHandler:
         self.token = self.get_access_token()
 
     def post_token(self):
-        if len(pdlearn.globalvar.auto_login_host) > 0:
-            url_ = pdlearn.globalvar.auto_login_host + '/wechat/set_token'
+        if len(self.auto_login_host) > 0:
+            url_ = self.auto_login_host + '/wechat/set_token'
 
             post_dat_ = {'token': self.token[0],
                          'expire_time': self.token[1],
