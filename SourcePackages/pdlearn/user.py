@@ -12,6 +12,7 @@ from pdlearn import file
 from pdlearn import color
 from pdlearn.mydriver import Mydriver
 from pdlearn.exp_catch import exception_catcher
+from db_con import *
 
 
 def get_userId(cookies):
@@ -19,68 +20,68 @@ def get_userId(cookies):
     return userId
 
 
+class UserInfo:
+    def __init__(self, uid_: str = '', nickname_: str = '', cookies_: str = ''):
+        self.uid = uid_
+        self.nickname = nickname_
+        self.cookies = cookies_
+
+    @property
+    def fullname(self) -> str:
+        return self.uid + '_' + self.nickname
+
+
+def get_user_info(uid_: str) -> UserInfo:
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            d_ = cur_.execute('select * from user_info where uid="%s"' % uid_).fetchone()
+            if d_:
+                return UserInfo(uid_=d_['uid'], nickname_=d_['nickname'], cookies_=d_['cookies'])
+            else:
+                return UserInfo()
+
+
 @exception_catcher(reserve_value="_")
 def get_fullname(userId):
-    fullname = "_"
-    nickname = ""
-    status = get_user_status()
-    for i in status["userId_mapping"]:
-        if (str(userId) == i):
-            nickname = status["userId_mapping"][i]
-            fullname = i + '_' + nickname
-            break
-    if (nickname == ""):
-        cookies = get_cookie(userId)
-        uid, total, scores, userName = score.get_score(cookies)
-        # print("查找 userId: " + str(userId) + " 失败...")
-        # pattern = re.compile(u'^[a-zA-Z0-9_\u4e00-\u9fa5]+$')
-        # while True:
-        #     if globalvar.nohead==True:
-        #         input_name="Docker"
-        #     else:
-        #         input_name = input("将为此 userId 添加一个新用户。请输入此用户昵称：")
-        #     if (pattern.search(input_name) != None):
-        #         break
-        #     else:
-        #         print("输入不符合要求，输入内容只能为：英文字母、数字、下划线、中文。")
-        fullname = str(userId) + '_' + userName
-        save_fullname(fullname)
-    return fullname
+    u_inf_ = get_user_info(userId)
+    return u_inf_.fullname
 
 
 @exception_catcher(reserve_value="")
 def get_nickname(userId):
-    return get_fullname(userId).split('_', 1)[1]
+    u_inf_ = get_user_info(userId)
+    return u_inf_.nickname
 
 
-def save_fullname(fullname):
-    status = get_user_status()
-    userId = fullname.split('_', 1)[0]
-    nickname = fullname.split('_', 1)[1]
-    status["userId_mapping"][userId] = nickname
-    save_user_status(status)
+# def save_fullname(fullname):
+#     status = get_user_status()
+#     userId = fullname.split('_', 1)[0]
+#     nickname = fullname.split('_', 1)[1]
+#     status["userId_mapping"][userId] = nickname
+#     save_user_status(status)
 
 
-def get_user_status():
-    template_json_str = '''{\n    "#-说明1":"此文件是保存用户数据及登陆状态的配置文件",''' + \
-                        '''\n    "#-说明2":"程序会自动读写该文件。",''' + \
-                        '''\n    "#-说明3":"如不熟悉，请勿自行修改内容。错误修改可能导致程序崩溃",''' + \
-                        '''\n    "#____________________________________________________________":"",''' + \
-                        '''\n    "last_userId":0,\n    "userId_mapping":{\n        "0":"default"\n    }\n}'''
-    status = file.get_json_data("user/user_status.json", template_json_str)
-    save_user_status(status)
-    # print(status)
-    return status
+# def get_user_status():
+#     template_json_str = '''{\n    "#-说明1":"此文件是保存用户数据及登陆状态的配置文件",''' + \
+#                         '''\n    "#-说明2":"程序会自动读写该文件。",''' + \
+#                         '''\n    "#-说明3":"如不熟悉，请勿自行修改内容。错误修改可能导致程序崩溃",''' + \
+#                         '''\n    "#____________________________________________________________":"",''' + \
+#                         '''\n    "last_userId":0,\n    "userId_mapping":{\n        "0":"default"\n    }\n}'''
+#     status = file.get_json_data("user/user_status.json", template_json_str)
+#     save_user_status(status)
+#     # print(status)
+#     return status
 
 
-def update_last_user(userId):
-    status = get_user_status()
-    status["last_userId"] = userId
-    save_user_status(status)
+def update_last_user(userId: str):
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            cur_.execute('insert or replace into user_cfg values(1,"%s")' % userId)
+        con_.commit()
 
 
-def save_user_status(status):
-    file.save_json_data("user/user_status.json", status)
+# def save_user_status(status):
+#     file.save_json_data("user/user_status.json", status)
 
 
 # def get_last_quiz(quiz_type, uid):
@@ -104,6 +105,11 @@ def save_user_status(status):
 #     file.save_json_data("user/last_quiz.json", status)
 
 def get_cookie(userId):
+    u_inf_ = get_user_info(userId)
+    if len(u_inf_.cookies)>0:
+
+    
+
     userId = str(userId)
     template_json_str = '''{}'''
     cookies_json_obj = file.get_json_data(
@@ -234,7 +240,7 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
             if 'name' in d and 'value' in d and 'expiry' in d and d["name"] == "token":
                 remain_time = (int(d['expiry']) - (int)(time.time())) / 3600
                 msg = get_nickname(uid) + " 登录剩余有效时间：" + \
-                    str(int(remain_time * 10) / 10) + " 小时."
+                      str(int(remain_time * 10) / 10) + " 小时."
                 print(color.green(msg), end="")
                 msgInfo[uid] = msg
                 if remain_time < 0:
@@ -281,7 +287,7 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
             print(color.blue(get_fullname(user_id)) + " 的今日得分：")
             total, scores = score.show_score(cookie)
             if str(user_id) in msgInfo:
-                msgInfo[str(user_id)] += " 今日得分："+str(scores["today"])
+                msgInfo[str(user_id)] += " 今日得分：" + str(scores["today"])
     return msgInfo
 
 
