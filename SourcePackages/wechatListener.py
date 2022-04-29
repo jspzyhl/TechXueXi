@@ -151,15 +151,14 @@ def wechat_init(msg: MessageInfo):
         return msg.returnXml(res.get("errmsg"))
 
 
-def get_uid(oid):
-    json_str = '''[]'''
-    json_obj = file.get_json_data(
-        "user/wechat_bind.json", json_str)
-    wx_list = list(filter(lambda w: w["openId"] == oid, json_obj))
-    if wx_list:
-        return wx_list[0]["accountId"]
-    else:
-        return ""
+def get_uid(openid_: str):
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            d_ = cur_.execute('select uid from wechat_bind where openid="%s"' % openid_).fetchone()
+            if d_ and d_['uid']:
+                return d_['uid']
+            else:
+                return ''
 
 
 def wechat_get_openid(msg: MessageInfo):
@@ -177,8 +176,8 @@ def wechat_get_score(msg: MessageInfo):
     if not uid:
         wechat.send_text("您未绑定账号，请联系管理员绑定", uid=msg.from_user_name)
     else:
-        score = pdl.get_my_score(uid)
-        if not score:
+        success_ = pdl.get_my_score(uid)
+        if not success_:
             wechat.send_text("登录过期，请重新登录后再试", msg.from_user_name)
             pdl.add_user(msg.from_user_name)
 
