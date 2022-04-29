@@ -78,14 +78,14 @@ def get_user_info(uid_: str) -> UserInfo:
 
 
 @exception_catcher(reserve_value="_")
-def get_fullname(userId):
-    u_inf_ = get_user_info(userId)
+def get_fullname(uid_: str):
+    u_inf_ = get_user_info(uid_)
     return u_inf_.fullname
 
 
 @exception_catcher(reserve_value="")
-def get_nickname(userId):
-    u_inf_ = get_user_info(userId)
+def get_nickname(uid_: str):
+    u_inf_ = get_user_info(uid_)
     return u_inf_.nickname
 
 
@@ -109,10 +109,10 @@ def get_nickname(userId):
 #     return status
 
 
-def update_last_user(userId: str):
+def update_last_user(uid_: str):
     with DB.con() as con_:
         with closing(con_.cursor()) as cur_:
-            cur_.execute('insert or replace into user_cfg values(1,"%s")' % userId)
+            cur_.execute('insert or replace into user_cfg values(1,"%s")' % uid_)
         con_.commit()
 
 
@@ -174,30 +174,30 @@ def remove_cookie(uid_: str):
         con_.commit()
 
 
-def get_article_video_json():
-    template_json_str = '''{"#此文件记录用户的视频和文章的浏览进度":"","article_index":{},"video_index":{}}'''
-    article_video_json = file.get_json_data(
-        "user/article_video_index.json", template_json_str)
-    return article_video_json
+# def get_article_video_json():
+#     template_json_str = '''{"#此文件记录用户的视频和文章的浏览进度":"","article_index":{},"video_index":{}}'''
+#     article_video_json = file.get_json_data(
+#         "user/article_video_index.json", template_json_str)
+#     return article_video_json
 
 
-def get_index(userId, index_type):
-    article_video_json = get_article_video_json()
-    indexs = article_video_json[index_type]
-    if (str(userId) in indexs.keys()):
-        index = indexs[str(userId)]
-    else:
-        index = 0
-        article_video_json[index_type][str(userId)] = index
-        file.save_json_data(
-            "user/article_video_index.json", article_video_json)
-    return int(index)
+# def get_index(userId, index_type):
+#     article_video_json = get_article_video_json()
+#     indexs = article_video_json[index_type]
+#     if (str(userId) in indexs.keys()):
+#         index = indexs[str(userId)]
+#     else:
+#         index = 0
+#         article_video_json[index_type][str(userId)] = index
+#         file.save_json_data(
+#             "user/article_video_index.json", article_video_json)
+#     return int(index)
 
 
-def save_index(userId, index, index_type):
-    article_video_json = get_article_video_json()
-    article_video_json[index_type][str(userId)] = index
-    file.save_json_data("user/article_video_index.json", article_video_json)
+# def save_index(userId, index, index_type):
+#     article_video_json = get_article_video_json()
+#     article_video_json[index_type][str(userId)] = index
+#     file.save_json_data("user/article_video_index.json", article_video_json)
 
 
 def get_article_index(uid_: str) -> int:
@@ -234,10 +234,10 @@ def save_video_index(uid_: str, index_: int):
         con_.commit()
 
 
-def get_default_userId() -> str:
+def get_default_userid() -> str:
     with DB.con() as con_:
         with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select * from user_cfg limit 1').fetchone()
+            d_ = cur_.execute('select * from user_cfg where id=1').fetchone()
             if d_ and d_['last_uid']:
                 return d_['last_uid']
             else:
@@ -245,17 +245,16 @@ def get_default_userId() -> str:
 
 
 def get_default_nickname():
-    return get_nickname(get_default_userId())
+    return get_nickname(get_default_userid())
 
 
 def get_default_fullname():
-    return get_fullname(get_default_userId())
+    return get_fullname(get_default_userid())
 
 
 def check_default_user_cookie():
-    default_userid = get_default_userId()
-    default_fullname = get_default_fullname()
-    default_nickname = get_default_nickname()
+    default_userid = get_default_userid()
+    default_nickname = get_nickname(default_userid)
     print_list = [color.blue(str(default_userid)),
                   color.blue(default_nickname)]
     print(
@@ -285,7 +284,7 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
                 cookie_list = pickle.loads(cookies_bytes)
                 for d in cookie_list:  # 检查是否过期
                     if 'name' in d and 'value' in d and 'expiry' in d and d["name"] == "token":
-                        remain_time = (int(d['expiry']) - (int)(time.time())) / 3600
+                        remain_time = (int(d['expiry']) - int(time.time())) / 3600
                         msg = get_nickname(uid) + " 登录剩余有效时间：" + \
                               str(int(remain_time * 10) / 10) + " 小时."
                         print(color.green(msg), end="")
@@ -378,7 +377,7 @@ def select_user():
             print("默认用户已切换为：" + color.blue(get_fullname(user_id)))
             update_last_user(user_id)
     else:
-        print("目前你只有一个用户。用户名：", get_default_userId(),
+        print("目前你只有一个用户。用户名：", get_default_userid(),
               "，昵称：", get_default_nickname())
 
 

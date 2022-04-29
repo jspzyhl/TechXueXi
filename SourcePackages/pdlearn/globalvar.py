@@ -24,8 +24,8 @@ scheme = ""
 lock = False
 stime = False
 single = False
-tg_bot = None
-wechat = None
+tg_bot: TelegarmHandler = None
+wechat: WechatHandler = None
 web = WebHandler()
 push_msg = ""
 auto_login_host = ''
@@ -99,7 +99,7 @@ def pushprint(text, chat_id=None):
     推送或者显示
     """
     global push_msg
-    if nohead == True:
+    if nohead:
         # 如果存在全局消息，追加该消息，同时发送，并清空该消息
         if push_msg:
             text = push_msg + "\n" + text

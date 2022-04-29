@@ -14,7 +14,7 @@ from pdlearn.wechat import WechatHandler
 from pdlearn.threads import MyThread
 from pdlearn import file
 import pandalearning as pdl
-from pdlearn import globalvar as gl
+from pdlearn.db_con import *
 
 
 class ThreadList:
@@ -36,7 +36,21 @@ appid = cfg_get("addition.wechat.appid", "")
 appsecret = cfg_get("addition.wechat.appsecret", "")
 token = cfg_get("addition.wechat.token", "")
 openid = cfg_get("addition.wechat.openid", "")
-wechat = WechatHandler()
+
+wechat: WechatHandler = None
+auto_login_host = ''
+
+
+def init():
+    global auto_login_host, wechat
+
+    DB.init()
+    wechat = WechatHandler()
+
+    if os.getenv('AutoLoginHost') is not None:
+        auto_login_host = os.getenv('AutoLoginHost')
+    else:
+        auto_login_host = ''
 
 
 class MessageInfo:
@@ -292,8 +306,8 @@ def wechat_login(msg: MessageInfo):
         if len(args) == 3:
             phonenum_ = args[1]
             password_ = args[2]
-            if len(gl.auto_login_host) > 0:
-                url_ = gl.auto_login_host + '/xx/add_account'
+            if len(auto_login_host) > 0:
+                url_ = auto_login_host + '/xx/add_account'
 
                 post_dat_ = {'phonenum': phonenum_,
                              'password': password_,
@@ -316,8 +330,8 @@ def wechat_authcode(msg: MessageInfo):
     args = msg.content.split(" ")
     if len(args) == 2:
         authcode_ = args[1]
-        if len(gl.auto_login_host) > 0:
-            url_ = gl.auto_login_host + '/xx/set_auth_code'
+        if len(auto_login_host) > 0:
+            url_ = auto_login_host + '/xx/set_auth_code'
 
             post_dat_ = {'auth_code': authcode_,
                          'openid': msg.from_user_name,
@@ -447,7 +461,7 @@ def token_request():
 
 
 def run_app1():
-    gl.init_global()
+    init()
     app.run('0.0.0.0', 8088)
 
 

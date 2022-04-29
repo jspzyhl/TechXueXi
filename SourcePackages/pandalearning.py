@@ -21,7 +21,7 @@ except ImportError as e:
 
 
 def get_argv():
-    if gl.is_init != True:
+    if not gl.is_init:
         gl.init_global()
         if len(argv) > 2:
             if argv[2] == "hidden":
@@ -52,8 +52,8 @@ def start_learn(uid, name):
         print("当前选择模式：" + TechXueXi_mode + "\n" + "=" * 60)
 
     if not name:
-        user_fullname = user.get_fullname(uid)
-        name = user_fullname.split('_', 1)[1]
+        usr_info = user.get_user_info(uid)
+        name = usr_info.nickname
     else:
         user_fullname = uid + "_" + name
 
@@ -82,8 +82,8 @@ def start_learn(uid, name):
             return
         user.save_cookies(cookies)
         uid = user.get_userId(cookies)
-        user_fullname = user.get_fullname(uid)
-        name = user_fullname.split('_', 1)[1]
+        usr_info = user.get_user_info(uid)
+        name = usr_info.nickname
         user.update_last_user(uid)
     output = name + " 登录正常，开始学习...\n"
 
