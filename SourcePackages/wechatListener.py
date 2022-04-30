@@ -43,10 +43,8 @@ auto_login_host = ''
 
 def init():
     global auto_login_host, wechat
-
     DB.init()
     wechat = WechatHandler()
-
     if os.getenv('AutoLoginHost') is not None:
         auto_login_host = os.getenv('AutoLoginHost')
     else:
@@ -197,25 +195,33 @@ def wechat_add():
     pdl.add_user()
 
 
+def bind_user(uid_: str, openid_: str):
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            cur_.execute('insert or replace into wechat_bind values("%s","%s")' % (uid_, openid_))
+        con_.commit()
+
+
 def wechat_bind(msg: MessageInfo):
     """
     绑定微信号
     """
     args = msg.content.split(" ")
     if len(args) == 3:
-        json_str = '''[]'''
-        json_obj = file.get_json_data(
-            "user/wechat_bind.json", json_str)
-        wx_list = list(filter(lambda w: w["openId"] == args[1], json_obj))
-        if wx_list:
-            index = json_obj.index(wx_list[0])
-            json_obj[index]["accountId"] = args[2]
-        else:
-            json_obj.append({"openId": args[1], "accountId": args[2]})
-        file.save_json_data("user/wechat_bind.json", json_obj)
+        openid_ = args[1]
+        uid_ = args[2]
+        bind_user(uid_, openid_)
         return msg.returnXml("绑定成功")
     else:
-        return msg.returnXml("参数格式错误")
+        return msg.returnXml("参数格式错误，正确格式为：“/bind 微信openid 账号ID”")
+
+
+def unbind_user(openid_: str) -> bool:
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            cur_.execute('delete from wechat_bind where openid="%s"' % openid_)
+        con_.commit()
+        return con_.total_changes > 0
 
 
 def wechat_unbind(msg: MessageInfo):
@@ -224,19 +230,12 @@ def wechat_unbind(msg: MessageInfo):
     """
     args = msg.content.split(" ")
     if len(args) == 2:
-        json_str = '''[]'''
-        json_obj = file.get_json_data(
-            "user/wechat_bind.json", json_str)
-        wx_list = list(filter(lambda w: w["openId"] == args[1], json_obj))
-        if wx_list:
-            index = json_obj.index(wx_list[0])
-            json_obj.pop(index)
-            file.save_json_data("user/wechat_bind.json", json_obj)
+        if unbind_user(args[1]):
             return msg.returnXml("解绑成功")
         else:
             return msg.returnXml("账号编码错误或该编码未绑定账号")
     else:
-        return msg.returnXml("参数格式错误")
+        return msg.returnXml("参数格式错误，正确格式为：“/unbind 微信openid”")
 
 
 def wechat_list(msg: MessageInfo):
@@ -249,7 +248,7 @@ def wechat_list(msg: MessageInfo):
 
 def wechat_admin_learn(msg: MessageInfo):
     """
-    学习
+    学x
     """
 
 
@@ -274,14 +273,12 @@ def wechat_update(msg: MessageInfo):
 def is_valid_user(openid_: str) -> bool:
     if openid_ == openid:
         return True
-    json_str = '''[]'''
-    json_obj = file.get_json_data(
-        "user/wechat_grant.json", json_str)
-    wx_list = list(filter(lambda w: w == openid_, json_obj))
-    if wx_list:
-        return True
-    else:
-        return False
+    with DB.con() as con_:
+        with closing(con_.cursor()) as cur_:
+            d_ = cur_.execute('select admin from wechat_privilege where openid="%s"' % openid_).fetchone()
+            if d_ and d_['admin']:
+                return d_['admin'] > 0
+    return False
 
 
 def login_xx(url_, post_dat_):
@@ -317,7 +314,7 @@ def wechat_login(msg: MessageInfo):
             else:
                 return msg.returnXml('登录失败，未设置自动登录服务')
         else:
-            return msg.returnXml("参数格式错误，正确格式：/login 手机号码 密码")
+            return msg.returnXml("参数格式错误，正确格式：“/login 手机号码 密码”")
     else:
         return msg.returnXml("当前微信号没有执行此命令的权限，请联系管理员授权")
 
@@ -345,44 +342,37 @@ def wechat_authcode(msg: MessageInfo):
 
 def wechat_grant(msg: MessageInfo):
     """
-    授权微信号
+    授权微信号，只有超级管理员能使用
     """
     if msg.from_user_name == openid:
         args = msg.content.split(" ")
         if len(args) == 2:
-            json_str = '''[]'''
-            json_obj = file.get_json_data(
-                "user/wechat_grant.json", json_str)
-            wx_list = list(filter(lambda w: w == args[1], json_obj))
-            if not wx_list:
-                json_obj.append(args[1])
-
-            file.save_json_data("user/wechat_grant.json", json_obj)
-            return msg.returnXml("授权成功")
+            with DB.con() as con_:
+                with closing(con_.cursor()) as cur_:
+                    cur_.execute('insert or replace into wechat_privilege values("%s",1)' % args[1])
+                con_.commit()
+                return msg.returnXml("授权成功")
         else:
-            return msg.returnXml("参数格式错误")
+            return msg.returnXml("参数格式错误，正确格式：“/grant 微信openid”")
 
 
 def wechat_revoke(msg: MessageInfo):
     """
-    撤销微信号
+    撤销微信号，只有超级管理员能使用
     """
     if msg.from_user_name == openid:
         args = msg.content.split(" ")
         if len(args) == 2:
-            json_str = '''[]'''
-            json_obj = file.get_json_data(
-                "user/wechat_grant.json", json_str)
-            wx_list = list(filter(lambda w: w == args[1], json_obj))
-            if wx_list:
-                index = json_obj.index(wx_list[0])
-                json_obj.pop(index)
-                file.save_json_data("user/wechat_grant.json", json_obj)
-                return msg.returnXml("撤销成功")
-            else:
-                return msg.returnXml("账号编码错误或该编码未被授权")
+            with DB.con() as con_:
+                with closing(con_.cursor()) as cur_:
+                    cur_.execute('delete from wechat_privilege where openid="%s"' % args[1])
+                con_.commit()
+                if con_.total_changes > 0:
+                    return msg.returnXml("撤销成功")
+                else:
+                    return msg.returnXml("账号编码错误或该编码未被授权")
         else:
-            return msg.returnXml("参数格式错误")
+            return msg.returnXml("参数格式错误，正确格式：“/revoke 微信openid”")
 
 
 @app.route('/wechat', methods=['GET', 'POST'])

@@ -148,7 +148,7 @@ def get_cookie(uid_: str):
         for d in cookie_list:  # 检查是否过期
             if 'name' in d and 'value' in d and 'expiry' in d:
                 expiry_timestamp = int(d['expiry'])
-                if expiry_timestamp > (int)(time.time()):
+                if expiry_timestamp > int(time.time()):
                     pass
                 else:
                     return []
