@@ -278,52 +278,53 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
         with closing(con_.cursor()) as cur_:
             l_ = cur_.execute('select uid,cookies from user_info').fetchall()
             for d_ in l_:
-                uid = d_['uid']
-                cookies_b64 = d_['cookies']
-                cookies_bytes = base64.b64decode(cookies_b64)
-                cookie_list = pickle.loads(cookies_bytes)
-                for d in cookie_list:  # 检查是否过期
-                    if 'name' in d and 'value' in d and 'expiry' in d and d["name"] == "token":
-                        remain_time = (int(d['expiry']) - int(time.time())) / 3600
-                        msg = get_nickname(uid) + " 登录剩余有效时间：" + \
-                              str(int(remain_time * 10) / 10) + " 小时."
-                        print(color.green(msg), end="")
-                        msg_info[uid] = msg
-                        if remain_time < 0:
-                            print(color.red(" 已过期 需要重新登陆，将自动移除此cookie."))
-                            remove_cookie(uid)
-                        else:
-                            # print(color.blue(" 有效"), end="")
-                            valid_cookies.append(cookie_list)
-                            if remain_time <= live_time:  # 全新cookies的有效时间是12h
-                                print(color.red(" 需要刷新"))
-                                need_check = True
-                                # 暂没有证据表明可以用requests来请求，requests请求的响应不带cookies，不确定会不会更新cookies时间
-                                # （但是万一服务端自动更新了cookie，可以试试12h之后再访问呢？则剩余时间直接设为12即可。有空的伙计可以做个实验）
-                                # jar = RequestsCookieJar()
-                                # for cookie in cookie_list:
-                                #     jar.set(cookie['name'], cookie['value'])
-                                # new_cookies = requests.get("https://pc.xuexi.cn/points/my-points.html", cookies=jar,
-                                #                         headers={'Cache-Control': 'no-cache'}).cookies.get_dict()
-                                # 浏览器登陆方式更新cookie，速度较慢但可靠
-                                driver_login = Mydriver(nohead=False)
-                                driver_login.get_url(
-                                    "https://www.xuexi.cn/notFound.html")
-                                driver_login.set_cookies(cookie_list)
-                                driver_login.get_url(
-                                    'https://pc.xuexi.cn/points/my-points.html')
-                                new_cookies = driver_login.get_cookies()
-                                driver_login.quit()
-                                found_token = False
-                                for j in new_cookies:  # 检查token
-                                    if 'name' in j and j["name"] == "token":
-                                        found_token = True
-                                if not found_token:
-                                    remove_cookie(uid)  # cookie不含token则无效，删除cookie
-                                else:
-                                    save_cookies(new_cookies)
+                if d_['uid'] and d_['cookies']:
+                    uid = d_['uid']
+                    cookies_b64 = d_['cookies']
+                    cookies_bytes = base64.b64decode(cookies_b64)
+                    cookie_list = pickle.loads(cookies_bytes)
+                    for d in cookie_list:  # 检查是否过期
+                        if 'name' in d and 'value' in d and 'expiry' in d and d["name"] == "token":
+                            remain_time = (int(d['expiry']) - int(time.time())) / 3600
+                            msg = get_nickname(uid) + " 登录剩余有效时间：" + \
+                                  str(int(remain_time * 10) / 10) + " 小时."
+                            print(color.green(msg), end="")
+                            msg_info[uid] = msg
+                            if remain_time < 0:
+                                print(color.red(" 已过期 需要重新登陆，将自动移除此cookie."))
+                                remove_cookie(uid)
                             else:
-                                print(color.green(" 无需刷新"))
+                                # print(color.blue(" 有效"), end="")
+                                valid_cookies.append(cookie_list)
+                                if remain_time <= live_time:  # 全新cookies的有效时间是12h
+                                    print(color.red(" 需要刷新"))
+                                    need_check = True
+                                    # 暂没有证据表明可以用requests来请求，requests请求的响应不带cookies，不确定会不会更新cookies时间
+                                    # （但是万一服务端自动更新了cookie，可以试试12h之后再访问呢？则剩余时间直接设为12即可。有空的伙计可以做个实验）
+                                    # jar = RequestsCookieJar()
+                                    # for cookie in cookie_list:
+                                    #     jar.set(cookie['name'], cookie['value'])
+                                    # new_cookies = requests.get("https://pc.xuexi.cn/points/my-points.html", cookies=jar,
+                                    #                         headers={'Cache-Control': 'no-cache'}).cookies.get_dict()
+                                    # 浏览器登陆方式更新cookie，速度较慢但可靠
+                                    driver_login = Mydriver(nohead=False)
+                                    driver_login.get_url(
+                                        "https://www.xuexi.cn/notFound.html")
+                                    driver_login.set_cookies(cookie_list)
+                                    driver_login.get_url(
+                                        'https://pc.xuexi.cn/points/my-points.html')
+                                    new_cookies = driver_login.get_cookies()
+                                    driver_login.quit()
+                                    found_token = False
+                                    for j in new_cookies:  # 检查token
+                                        if 'name' in j and j["name"] == "token":
+                                            found_token = True
+                                    if not found_token:
+                                        remove_cookie(uid)  # cookie不含token则无效，删除cookie
+                                    else:
+                                        save_cookies(new_cookies)
+                                else:
+                                    print(color.green(" 无需刷新"))
 
     if need_check:  # 再执行一遍来检查有效情况
         print("再次检查cookies有效时间...")
