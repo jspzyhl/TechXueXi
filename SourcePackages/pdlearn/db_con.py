@@ -14,7 +14,7 @@ class DB:
 
     @classmethod
     def con(cls) -> sqlite3.Connection:
-        __con = sqlite3.connect(cls.__db_path)
+        __con = sqlite3.connect(cls.__db_path, timeout=30)
         __con.row_factory = sqlite3.Row
         return __con
 
