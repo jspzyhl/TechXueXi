@@ -20,6 +20,24 @@ COPY run.sh /xuexi/run.sh
 COPY start.sh /xuexi/start.sh 
 COPY supervisor.sh /xuexi/supervisor.sh
 
+RUN cd /xuexi/; \
+  apt-get install -y lsb-release gnupg debconf-utils; \
+  chmod 777 /root; \
+  wget https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb; \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29; \
+  export DEBIAN_FRONTEND=noninteractive; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-codename select buster'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-distro select debian'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-preview select Disabled'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-server select mysql-5.7'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-product select Ok'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt'; \
+  debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-tools select Disabled'; \
+  debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password 1234"; \
+  debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password 1234"; \
+  dpkg -i mysql-apt-config_0.8.18-1_all.deb; \
+  apt-get update; \
+  apt install -y mysql-community-server
 RUN pip install -r /xuexi/requirements.txt
 RUN cd /xuexi/; \
   wget https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_92.0.4515.159-1_amd64.deb; \

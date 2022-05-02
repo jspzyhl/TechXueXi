@@ -1,5 +1,7 @@
 #!/bin/bash
 
+service mysql start
+
 update() {
 
     echo "检查更新"
