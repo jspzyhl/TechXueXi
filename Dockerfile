@@ -19,6 +19,7 @@ COPY requirements.txt /xuexi/requirements.txt
 COPY run.sh /xuexi/run.sh 
 COPY start.sh /xuexi/start.sh 
 COPY supervisor.sh /xuexi/supervisor.sh
+COPY db_init.sql /xuexi/db_init.sql
 
 RUN apt-get install -y lsb-release gnupg debconf-utils
 RUN { \
@@ -39,7 +40,9 @@ RUN { \
     export DEBIAN_FRONTEND=noninteractive && \
     dpkg -i mysql-apt-config*.deb && \
     apt-get update && \
-    apt install -y mysql-community-server
+    apt install -y mysql-community-server && \
+    /etc/init.d/mysql start && \
+    mysql -h localhost -u root -p1234 < ./db_init.sql
 
 RUN pip install -r /xuexi/requirements.txt
 RUN cd /xuexi/; \
