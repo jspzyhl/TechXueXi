@@ -25,6 +25,12 @@ class DB:
                                       charset='utf8mb4',
                                       cursorclass=DictCursor
                                       )
+            with DB.con() as con_:
+                with con_.cursor() as cur_:
+                    cur_.execute('select * from user_info where uid=0')
+                    d_ = cur_.fetchone()
+                    if d_:
+                        print(d_['nickname'])
 
 
 if __name__ == '__main__':
