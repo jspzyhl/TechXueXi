@@ -50,13 +50,14 @@ class WechatHandler:
                     if d_:
                         token_ = d_['token']
                         exp_ = d_['expire_time']
+                        print('token_: %s, exp_: %s' % (token_, exp_))
                         if token_ and exp_ > time.time():
                             self.token_cache = TokenCache(token_, exp_)
                             return self.token_cache
 
+        print('appid: %s, appsec: %s' % (self.appid, self.appsecret))
         # 获取新token
         assert self.appid and self.appsecret, '环境变量：wechat_appid 或 wechat_appsecret 未设置'
-        print('appid: %s, appsec: %s' % (self.appid, self.appsecret))
         url_token = 'https://api.weixin.qq.com/cgi-bin/token?'
         res = requests.get(url=url_token, params={
             "grant_type": 'client_credential',

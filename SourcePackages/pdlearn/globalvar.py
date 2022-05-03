@@ -12,6 +12,7 @@ import os
 import base64  # 解码二维码图片
 from pdlearn.db_con import *
 
+DB.init()
 # 全局变量是否已经初始化
 is_init = False
 pushmode = "0"  # 0 不开启 1 钉钉 2 微信（并未实现） 3 Server 酱 4 pluspush 5 Telegram Bot 6 Web Dashboard
@@ -38,8 +39,6 @@ def init_global():
     """
     global nohead, islooplogin, single, scheme, pushmode, accesstoken, secret, zhuanxiang, is_init, lock, stime, \
         tg_bot, wechat, topic, auto_login_host
-
-    DB.init()
 
     if os.getenv('Nohead') == "True":
         nohead = True

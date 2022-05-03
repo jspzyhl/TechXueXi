@@ -31,6 +31,7 @@ class ThreadList:
             t.join()
 
 
+DB.init()
 app = Flask(__name__)
 appid = get_env_or_cfg('.', 'wechat_appid', '')
 appsecret = get_env_or_cfg('.', 'wechat_appsecret', '')
@@ -38,7 +39,6 @@ openid = get_env_or_cfg('.', 'wechat_openid', '')
 token = get_env_or_cfg('.', 'wechat_token', '')
 auto_login_host = get_env_or_cfg('.', 'auto_login_host', '')
 wechat = WechatHandler()
-DB.init()
 
 
 class MessageInfo:
