@@ -69,6 +69,7 @@ class WechatHandler:
         with DB.con() as con_:
             with con_.cursor() as cur_:
                 cur_.execute('replace into wechat_token values(1,"%s",%f)' % (token, expires))
+                print(token, expires)
             con_.commit()
 
         Thread(name='post_token', target=self.post_token).start()
