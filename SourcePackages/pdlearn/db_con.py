@@ -31,6 +31,8 @@ class DB:
                     d_ = cur_.fetchone()
                     if d_:
                         print(d_['nickname'])
+                    cur_.execute('update user_info set article_index=0 where uid=0')
+                con_.commit()
 
 
 if __name__ == '__main__':

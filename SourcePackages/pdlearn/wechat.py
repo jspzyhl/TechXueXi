@@ -65,11 +65,11 @@ class WechatHandler:
         }).json()
         token = res.get('access_token')
         expires = int(res.get('expires_in')) - 10 + time.time()
+        print('测试：', token, expires)
         self.token_cache = TokenCache(token, expires)
         with DB.con() as con_:
             with con_.cursor() as cur_:
                 cur_.execute('replace into wechat_token values(1,"%s",%f)' % (token, expires))
-                print(token, expires)
             con_.commit()
 
         Thread(name='post_token', target=self.post_token).start()
