@@ -7,7 +7,7 @@ from pdlearn.wechat import WechatHandler
 from pdlearn.web import WebHandler
 import io
 from PIL import Image
-from pdlearn.config import cfg_get
+from pdlearn.config import *
 import os
 import base64  # 解码二维码图片
 from pdlearn.db_con import *
@@ -78,10 +78,7 @@ def init_global():
         else:
             secret = cfg_get("addition.secret", "")
 
-    if os.getenv('AutoLoginHost') is not None:
-        auto_login_host = os.getenv('AutoLoginHost')
-    else:
-        auto_login_host = ''
+    auto_login_host = get_env_or_cfg('.', 'auto_login_host', '')
 
     if os.getenv("ZhuanXiang"):
         zhuanxiang = os.getenv("ZhuanXiang") == "True"

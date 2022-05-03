@@ -1,51 +1,59 @@
 from pickle import STRING
 import requests
 import json
-from pdlearn.config import cfg_get
+from pdlearn.config import *
 from pdlearn import file
 import time
 from threading import Thread
 import os
+from pdlearn.db_con import *
+
+
+class TokenCache:
+    def __init__(self, token_: str = '', expire_: float = 0):
+        self.token: str = token_
+        self.expire_time: float = expire_
 
 
 class WechatHandler:
 
     def __init__(self):
-        if os.getenv('AutoLoginHost') is not None:
-            self.auto_login_host = os.getenv('AutoLoginHost')
-        else:
-            self.auto_login_host = ''
 
-        self.token = []
-        self.openid = cfg_get("addition.wechat.openid", "")
-        self.appid = cfg_get("addition.wechat.appid", "")
-        self.appsecret = cfg_get("addition.wechat.appsecret", "")
-        self.token = self.get_access_token()
+        self.auto_login_host = get_env_or_cfg('.', 'auto_login_host', '')
+        self.openid = get_env_or_cfg('.', 'wechat_openid', '')
+        self.appid = get_env_or_cfg('.', 'wechat_appid', '')
+        self.appsecret = get_env_or_cfg('.', 'wechat_appsecret', '')
+        self.token_cache = TokenCache()
 
     def post_token(self):
         if len(self.auto_login_host) > 0:
             url_ = self.auto_login_host + '/wechat/set_token'
 
-            post_dat_ = {'token': self.token[0],
-                         'expire_time': self.token[1],
+            post_dat_ = {'token': self.token_cache.token,
+                         'expire_time': self.token_cache.expire_time,
                          'appid': self.appid,
                          }
             requests.post(url=url_, data=json.dumps(post_dat_), timeout=30)
-        else:
-            print('pdlearn.globalvar.auto_login_host = "" ')
+        # else:
+        #     print('pdlearn.globalvar.auto_login_host = "" ')
 
     def get_access_token(self, refresh=False):
         if not refresh:
             # 检查变量
-            if self.token and self.token[1] > time.time():
-                return self.token
+            if self.token_cache.token and self.token_cache.expire_time > time.time():
+                return self.token_cache
             # 检查文件
-            template_json_str = '''[]'''
-            token_json_obj = file.get_json_data(
-                "user/wechat_token.json", template_json_str)
-            if token_json_obj and token_json_obj[1] > time.time():
-                self.token = token_json_obj
-                return self.token
+            with DB.con() as con_:
+                with con_.cursor() as cur_:
+                    cur_.execute('select * from wechat_token where id=1')
+                    d_ = cur_.fetchone()
+                    if d_:
+                        token_ = d_['token']
+                        exp_ = d_['expire_time']
+                        if token_ and exp_ > time.time():
+                            self.token_cache = TokenCache(token_, exp_)
+                            return self.token_cache
+
         # 获取新token
         url_token = 'https://api.weixin.qq.com/cgi-bin/token?'
         res = requests.get(url=url_token, params={
@@ -55,12 +63,14 @@ class WechatHandler:
         }).json()
         token = res.get('access_token')
         expires = int(res.get('expires_in')) - 10 + time.time()
-        self.token = [token, expires]
-        file.save_json_data("user/wechat_token.json", self.token)
+        self.token_cache = TokenCache(token, expires)
+        with DB.con() as con_:
+            with con_.cursor() as cur_:
+                cur_.execute('replace into wechat_token values(1,"%s",%f)' % (token, expires))
+            con_.commit()
 
         Thread(name='post_token', target=self.post_token).start()
-
-        return self.token
+        return self.token_cache
 
     def send_text(self, text: STRING, uid=""):
         if not uid:
@@ -73,7 +83,7 @@ class WechatHandler:
             login_tempid = cfg_get("addition.wechat.score_tempid", "")
             if login_tempid:
                 return self.send_template(login_tempid, {"score": {"value": text}}, uid, "")
-        token = self.get_access_token()
+        token = self.get_access_token().token
         url_msg = 'https://api.weixin.qq.com/cgi-bin/message/custom/send?'
         body = {
             "touser": uid,
@@ -92,7 +102,7 @@ class WechatHandler:
 
     def send_template(self, id, temp_data, uid, url):
         post_url = "https://api.weixin.qq.com/cgi-bin/message/template/send?"
-        token = self.get_access_token()
+        token = self.get_access_token().token
         body = {
             "touser": uid,
             "url": url,
@@ -111,28 +121,11 @@ class WechatHandler:
         """
         账号换绑定的openid，没有则返回主账号
         """
-        json_str = '''[]'''
-        json_obj = file.get_json_data(
-            "user/wechat_bind.json", json_str)
-        wx_list = list(
-            filter(lambda w: w["accountId"] == uid or w["openId"] == uid, json_obj))
-        if wx_list:
-            return wx_list[0]["openId"]
-        else:
-            return self.openid
-
-    def get_uid_by_opendid(self, openid_=None):
-        json_str = '''[]'''
-        json_obj = file.get_json_data(
-            "user/wechat_bind.json", json_str)
-
-        opid = openid_
-        if not openid_ or len(openid_) == 0:
-            opid = self.openid
-
-        wx_list = list(
-            filter(lambda w: w["accountId"] == opid or w["openId"] == opid, json_obj))
-        if wx_list:
-            return wx_list[0]["accountId"]
-        else:
-            return ''
+        with DB.con() as con_:
+            with con_.cursor() as cur_:
+                cur_.execute('select * from wechat_bind where uid="%s"' % uid)
+                d_ = cur_.fetchone()
+                if d_ and d_['openid']:
+                    return d_['openid']
+                else:
+                    return self.openid

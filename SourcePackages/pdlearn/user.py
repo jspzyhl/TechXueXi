@@ -69,8 +69,9 @@ class UserInfo:
 
 def get_user_info(uid_: str) -> UserInfo:
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select * from user_info where uid="%s"' % uid_).fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select * from user_info where uid="%s"' % uid_)
+            d_ = cur_.fetchone()
             if d_:
                 return UserInfo(uid_=d_['uid'], nickname_=d_['nickname'], cookies_=d_['cookies'])
             else:
@@ -111,8 +112,8 @@ def get_nickname(uid_: str):
 
 def update_last_user(uid_: str):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            cur_.execute('insert or replace into user_cfg values(1,"%s")' % uid_)
+        with con_.cursor() as cur_:
+            cur_.execute('replace into user_cfg values(1,"%s")' % uid_)
         con_.commit()
 
 
@@ -161,7 +162,7 @@ def save_cookies(cookies):
     cookies_bytes = pickle.dumps(cookies)
     cookies_b64 = base64.b64encode(cookies_bytes)
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
+        with con_.cursor() as cur_:
             cur_.execute(
                 'update user_info set cookies="%s" where uid="%s"' % (str(cookies_b64, encoding='utf-8'), uid_))
         con_.commit()
@@ -169,7 +170,7 @@ def save_cookies(cookies):
 
 def remove_cookie(uid_: str):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
+        with con_.cursor() as cur_:
             cur_.execute('update user_info set cookies=null where uid="%s"' % uid_)
         con_.commit()
 
@@ -202,8 +203,9 @@ def remove_cookie(uid_: str):
 
 def get_article_index(uid_: str) -> int:
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select article_index from user_info where uid="%s"' % uid_).fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select article_index from user_info where uid="%s"' % uid_)
+            d_ = cur_.fetchone()
             if d_ and d_['article_index']:
                 return d_['article_index']
             else:
@@ -212,15 +214,16 @@ def get_article_index(uid_: str) -> int:
 
 def save_article_index(uid_: str, index_: int):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
+        with con_.cursor() as cur_:
             cur_.execute('update user_info set article_index=%d where uid="%s"' % (index_, uid_))
         con_.commit()
 
 
 def get_video_index(uid_: str) -> int:
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select video_index from user_info where uid="%s"' % uid_).fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select video_index from user_info where uid="%s"' % uid_)
+            d_ = cur_.fetchone()
             if d_ and d_['video_index']:
                 return d_['video_index']
             else:
@@ -229,15 +232,16 @@ def get_video_index(uid_: str) -> int:
 
 def save_video_index(uid_: str, index_: int):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
+        with con_.cursor() as cur_:
             cur_.execute('update user_info set video_index=%d where uid="%s"' % (index_, uid_))
         con_.commit()
 
 
 def get_default_userid() -> str:
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select * from user_cfg where id=1').fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select * from user_cfg where id=1')
+            d_ = cur_.fetchone()
             if d_ and d_['last_uid']:
                 return d_['last_uid']
             else:
@@ -275,8 +279,9 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
     valid_cookies = []
 
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            l_ = cur_.execute('select uid,cookies from user_info').fetchall()
+        with con_.cursor() as cur_:
+            cur_.execute('select uid,cookies from user_info')
+            l_ = cur_.fetchall()
             for d_ in l_:
                 if d_['uid'] and d_['cookies']:
                     uid = d_['uid']
@@ -342,9 +347,9 @@ def refresh_all_cookies(live_time=8.0, display_score=False):  # cookie有效时�
 # 如有多用户，打印各个用户信息
 def list_user(printing=True):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            l_ = cur_.execute('select * from user_info').fetchall()
-            map_count = len(l_)
+        with con_.cursor() as cur_:
+            map_count = cur_.execute('select * from user_info')
+            l_ = cur_.fetchall()
             all_users = []
             for d_ in l_:
                 if d_['uid'] == '0':

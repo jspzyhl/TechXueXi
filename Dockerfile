@@ -13,7 +13,12 @@ ENV Nohead=True
 ENV Pushmode=2
 ENV islooplogin=False
 ENV CRONTIME="30 9 * * *"
-ENV AutoLoginHost=
+ENV auto_login_host=
+ENV wechat_openid=
+ENV wechat_appid=
+ENV wechat_appsecret=
+ENV wechat_token=
+
 # RUN rm -f /xuexi/config/*; ls -la
 COPY requirements.txt /xuexi/requirements.txt
 COPY run.sh /xuexi/run.sh 

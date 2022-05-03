@@ -9,7 +9,7 @@ from threading import Thread
 from threading import Lock
 
 from selenium.webdriver.support import ui
-from pdlearn.config import cfg_get
+from pdlearn.config import *
 from pdlearn.wechat import WechatHandler
 from pdlearn.threads import MyThread
 from pdlearn import file
@@ -32,23 +32,13 @@ class ThreadList:
 
 
 app = Flask(__name__)
-appid = cfg_get("addition.wechat.appid", "")
-appsecret = cfg_get("addition.wechat.appsecret", "")
-token = cfg_get("addition.wechat.token", "")
-openid = cfg_get("addition.wechat.openid", "")
-
-wechat: WechatHandler = None
-auto_login_host = ''
-
-
-def init():
-    global auto_login_host, wechat
-    DB.init()
-    wechat = WechatHandler()
-    if os.getenv('AutoLoginHost') is not None:
-        auto_login_host = os.getenv('AutoLoginHost')
-    else:
-        auto_login_host = ''
+appid = get_env_or_cfg('.', 'wechat_appid', '')
+appsecret = get_env_or_cfg('.', 'wechat_appsecret', '')
+openid = get_env_or_cfg('.', 'wechat_openid', '')
+token = get_env_or_cfg('.', 'wechat_token', '')
+auto_login_host = get_env_or_cfg('.', 'auto_login_host', '')
+wechat = WechatHandler()
+DB.init()
 
 
 class MessageInfo:
@@ -151,8 +141,9 @@ def wechat_init(msg: MessageInfo):
 
 def get_uid(openid_: str):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select uid from wechat_bind where openid="%s"' % openid_).fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select uid from wechat_bind where openid="%s"' % openid_)
+            d_ = cur_.fetchone()
             if d_ and d_['uid']:
                 return d_['uid']
             else:
@@ -197,8 +188,8 @@ def wechat_add():
 
 def bind_user(uid_: str, openid_: str):
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            cur_.execute('insert or replace into wechat_bind values("%s","%s")' % (uid_, openid_))
+        with con_.cursor() as cur_:
+            cur_.execute('replace into wechat_bind values("%s","%s")' % (uid_, openid_))
         con_.commit()
 
 
@@ -218,10 +209,10 @@ def wechat_bind(msg: MessageInfo):
 
 def unbind_user(openid_: str) -> bool:
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            cur_.execute('delete from wechat_bind where openid="%s"' % openid_)
+        with con_.cursor() as cur_:
+            n_ = cur_.execute('delete from wechat_bind where openid="%s"' % openid_)
         con_.commit()
-        return con_.total_changes > 0
+        return n_ > 0
 
 
 def wechat_unbind(msg: MessageInfo):
@@ -274,8 +265,9 @@ def is_valid_user(openid_: str) -> bool:
     if openid_ == openid:
         return True
     with DB.con() as con_:
-        with closing(con_.cursor()) as cur_:
-            d_ = cur_.execute('select admin from wechat_privilege where openid="%s"' % openid_).fetchone()
+        with con_.cursor() as cur_:
+            cur_.execute('select admin from wechat_privilege where openid="%s"' % openid_)
+            d_ = cur_.fetchone()
             if d_ and d_['admin']:
                 return d_['admin'] > 0
     return False
@@ -348,8 +340,8 @@ def wechat_grant(msg: MessageInfo):
         args = msg.content.split(" ")
         if len(args) == 2:
             with DB.con() as con_:
-                with closing(con_.cursor()) as cur_:
-                    cur_.execute('insert or replace into wechat_privilege values("%s",1)' % args[1])
+                with con_.cursor() as cur_:
+                    cur_.execute('replace into wechat_privilege values("%s",1)' % args[1])
                 con_.commit()
                 return msg.returnXml("授权成功")
         else:
@@ -364,10 +356,10 @@ def wechat_revoke(msg: MessageInfo):
         args = msg.content.split(" ")
         if len(args) == 2:
             with DB.con() as con_:
-                with closing(con_.cursor()) as cur_:
-                    cur_.execute('delete from wechat_privilege where openid="%s"' % args[1])
+                with con_.cursor() as cur_:
+                    n_ = cur_.execute('delete from wechat_privilege where openid="%s"' % args[1])
                 con_.commit()
-                if con_.total_changes > 0:
+                if n_ > 0:
                     return msg.returnXml("撤销成功")
                 else:
                     return msg.returnXml("账号编码错误或该编码未被授权")
@@ -450,7 +442,6 @@ def token_request():
 
 
 def run_app1():
-    init()
     app.run('0.0.0.0', 8088)
 
 
