@@ -1,6 +1,8 @@
 #!/bin/sh
 # apt-get install supervisor
 
+/etc/init.d/mysql start
+
 echo_supervisord_conf > /etc/supervisord.conf
 
 sed -i -e 's/^file=\/tmp/file=\/var\/run/' \
