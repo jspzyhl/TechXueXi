@@ -20,6 +20,8 @@ ENV wechat_openid=
 ENV wechat_appid=
 ENV wechat_appsecret=
 ENV wechat_token=
+ENV wechat_login_tempid=
+ENV wechat_score_tempid=
 
 # RUN rm -f /xuexi/config/*; ls -la
 COPY requirements.txt /xuexi/requirements.txt
