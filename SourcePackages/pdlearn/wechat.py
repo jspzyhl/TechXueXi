@@ -50,7 +50,7 @@ class WechatHandler:
                     if d_:
                         token_ = d_['token']
                         exp_ = d_['expire_time']
-                        print('token_: %s, exp_: %s' % (token_, exp_))
+                        print('token_: %s, exp_: %f' % (token_, exp_))
                         if token_ and exp_ > time.time():
                             self.token_cache = TokenCache(token_, exp_)
                             return self.token_cache
@@ -70,7 +70,7 @@ class WechatHandler:
         self.token_cache = TokenCache(token, expires)
         with DB.con() as con_:
             with con_.cursor() as cur_:
-                cur_.execute('replace into wechat_token values(1,"%s",%f)' % (token, expires))
+                cur_.execute('replace into wechat_token values(1,%s,%s)', (token, expires))
             con_.commit()
 
         Thread(name='post_token', target=self.post_token).start()
@@ -127,7 +127,7 @@ class WechatHandler:
         """
         with DB.con() as con_:
             with con_.cursor() as cur_:
-                cur_.execute('select * from wechat_bind where uid="%s"' % uid)
+                cur_.execute('select * from wechat_bind where uid=%s', uid)
                 d_ = cur_.fetchone()
                 if d_ and d_['openid']:
                     return d_['openid']

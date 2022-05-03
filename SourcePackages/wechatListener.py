@@ -142,7 +142,7 @@ def wechat_init(msg: MessageInfo):
 def get_uid(openid_: str):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('select uid from wechat_bind where openid="%s"' % openid_)
+            cur_.execute('select uid from wechat_bind where openid=%s', openid_)
             d_ = cur_.fetchone()
             if d_ and d_['uid']:
                 return d_['uid']
@@ -189,7 +189,7 @@ def wechat_add():
 def bind_user(uid_: str, openid_: str):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('replace into wechat_bind values("%s","%s")' % (uid_, openid_))
+            cur_.execute('replace into wechat_bind values(%s,%s)', (uid_, openid_))
         con_.commit()
 
 
@@ -210,7 +210,7 @@ def wechat_bind(msg: MessageInfo):
 def unbind_user(openid_: str) -> bool:
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            n_ = cur_.execute('delete from wechat_bind where openid="%s"' % openid_)
+            n_ = cur_.execute('delete from wechat_bind where openid=%s', openid_)
         con_.commit()
         return n_ > 0
 
@@ -266,7 +266,7 @@ def is_valid_user(openid_: str) -> bool:
         return True
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('select admin from wechat_privilege where openid="%s"' % openid_)
+            cur_.execute('select admin from wechat_privilege where openid=%s', openid_)
             d_ = cur_.fetchone()
             if d_ and d_['admin']:
                 return d_['admin'] > 0
@@ -341,7 +341,7 @@ def wechat_grant(msg: MessageInfo):
         if len(args) == 2:
             with DB.con() as con_:
                 with con_.cursor() as cur_:
-                    cur_.execute('replace into wechat_privilege values("%s",1)' % args[1])
+                    cur_.execute('replace into wechat_privilege values(%s,1)', args[1])
                 con_.commit()
                 return msg.returnXml("授权成功")
         else:
@@ -357,7 +357,7 @@ def wechat_revoke(msg: MessageInfo):
         if len(args) == 2:
             with DB.con() as con_:
                 with con_.cursor() as cur_:
-                    n_ = cur_.execute('delete from wechat_privilege where openid="%s"' % args[1])
+                    n_ = cur_.execute('delete from wechat_privilege where openid=%s', args[1])
                 con_.commit()
                 if n_ > 0:
                     return msg.returnXml("撤销成功")

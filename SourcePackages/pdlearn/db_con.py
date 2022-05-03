@@ -25,14 +25,14 @@ class DB:
                                       charset='utf8mb4',
                                       cursorclass=DictCursor
                                       )
-            with DB.con() as con_:
-                with con_.cursor() as cur_:
-                    cur_.execute('select * from user_info where uid=0')
-                    d_ = cur_.fetchone()
-                    if d_:
-                        print(d_['nickname'])
-                    cur_.execute('update user_info set article_index=0 where uid=0')
-                con_.commit()
+            # with DB.con() as con_:
+            #     with con_.cursor() as cur_:
+            #         cur_.execute('select * from user_info where uid=0')
+            #         d_ = cur_.fetchone()
+            #         if d_:
+            #             print(d_['nickname'])
+            #         cur_.execute('update user_info set article_index=0 where uid=0')
+            #     con_.commit()
 
 
 if __name__ == '__main__':

@@ -70,7 +70,7 @@ class UserInfo:
 def get_user_info(uid_: str) -> UserInfo:
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('select * from user_info where uid="%s"' % uid_)
+            cur_.execute('select * from user_info where uid=%s', uid_)
             d_ = cur_.fetchone()
             if d_:
                 return UserInfo(uid_=d_['uid'], nickname_=d_['nickname'], cookies_=d_['cookies'])
@@ -113,7 +113,7 @@ def get_nickname(uid_: str):
 def update_last_user(uid_: str):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('replace into user_cfg values(1,"%s")' % uid_)
+            cur_.execute('replace into user_cfg values(1,%s)', uid_)
         con_.commit()
 
 
@@ -164,14 +164,14 @@ def save_cookies(cookies):
     with DB.con() as con_:
         with con_.cursor() as cur_:
             cur_.execute(
-                'update user_info set cookies="%s" where uid="%s"' % (str(cookies_b64, encoding='utf-8'), uid_))
+                'update user_info set cookies=%s where uid=%s', (str(cookies_b64, encoding='utf-8'), uid_))
         con_.commit()
 
 
 def remove_cookie(uid_: str):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('update user_info set cookies=null where uid="%s"' % uid_)
+            cur_.execute('update user_info set cookies=null where uid=%s', uid_)
         con_.commit()
 
 
@@ -204,7 +204,7 @@ def remove_cookie(uid_: str):
 def get_article_index(uid_: str) -> int:
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('select article_index from user_info where uid="%s"' % uid_)
+            cur_.execute('select article_index from user_info where uid=%s', uid_)
             d_ = cur_.fetchone()
             if d_ and d_['article_index']:
                 return d_['article_index']
@@ -215,14 +215,14 @@ def get_article_index(uid_: str) -> int:
 def save_article_index(uid_: str, index_: int):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('update user_info set article_index=%d where uid="%s"' % (index_, uid_))
+            cur_.execute('update user_info set article_index=%s where uid=%s', (index_, uid_))
         con_.commit()
 
 
 def get_video_index(uid_: str) -> int:
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('select video_index from user_info where uid="%s"' % uid_)
+            cur_.execute('select video_index from user_info where uid=%s', uid_)
             d_ = cur_.fetchone()
             if d_ and d_['video_index']:
                 return d_['video_index']
@@ -233,7 +233,7 @@ def get_video_index(uid_: str) -> int:
 def save_video_index(uid_: str, index_: int):
     with DB.con() as con_:
         with con_.cursor() as cur_:
-            cur_.execute('update user_info set video_index=%d where uid="%s"' % (index_, uid_))
+            cur_.execute('update user_info set video_index=%s where uid=%s', (index_, uid_))
         con_.commit()
 
 
