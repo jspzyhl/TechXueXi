@@ -56,7 +56,7 @@ class WechatHandler:
 
         # 获取新token
         assert self.appid and self.appsecret, '环境变量：wechat_appid 或 wechat_appsecret 未设置'
-
+        print('appid: %s, appsec: %s' % (self.appid, self.appsecret))
         url_token = 'https://api.weixin.qq.com/cgi-bin/token?'
         res = requests.get(url=url_token, params={
             "grant_type": 'client_credential',
