@@ -131,7 +131,7 @@ def wechat_init(msg: MessageInfo):
     }
 
     res = requests.post(url=url, params={
-        'access_token': wechat.get_access_token()
+        'access_token': wechat.get_access_token().token
     }, data=json.dumps(body, ensure_ascii=False).encode('utf-8')).json()
     if res.get("errcode") == 0:
         return msg.returnXml("菜单初始化成功，请重新关注订阅号")
@@ -426,17 +426,15 @@ app2 = Flask(__name__)
 @app2.route("/token_request", methods=['POST'])
 def token_request():
     req_dat_ = json.loads(request.data)
-    token_ = ''
-    expire_ = 0
     if req_dat_['refresh']:
-        token_, expire_ = wechat.get_access_token(True)
+        token_cache = wechat.get_access_token(True)
     else:
-        token_, expire_ = wechat.get_access_token(False)
+        token_cache = wechat.get_access_token(False)
         Thread(name='post_token_app2', target=wechat.post_token).start()
 
     resp_dat_ = {'state': 'ok',
-                 'token': token_,
-                 'expire': expire_
+                 'token': token_cache.token,
+                 'expire': token_cache.expire_time
                  }
     return json.dumps(resp_dat_)
 
