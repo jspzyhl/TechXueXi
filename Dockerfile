@@ -30,7 +30,7 @@ COPY start.sh /xuexi/start.sh
 COPY supervisor.sh /xuexi/supervisor.sh
 COPY db_init.sql /xuexi/db_init.sql
 
-RUN apt-get install -y lsb-release gnupg debconf-utils
+RUN apt-get install -y lsb-release gnupg debconf-utils wait-for-it
 RUN { \
         echo mysql-apt-config mysql-apt-config/repo-codename select buster ; \
         echo mysql-apt-config mysql-apt-config/repo-distro select debian ; \
@@ -50,7 +50,8 @@ RUN { \
     dpkg -i mysql-apt-config*.deb && \
     apt-get update && \
     apt install -y mysql-community-server && \
-    /etc/init.d/mysql start && \
+    /usr/sbin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin > /dev/null & && \
+    wait-for-it -t 0 localhost:3306 -- echo "mysql is up" && \
     mysql -h localhost -u root -p1234 < ./db_init.sql
 
 RUN pip install -r /xuexi/requirements.txt
