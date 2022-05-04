@@ -1,6 +1,6 @@
 #!/bin/bash
 
-/etc/init.d/mysql restart
+# /etc/init.d/mysql start
 
 update() {
 

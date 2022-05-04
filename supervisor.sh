@@ -12,18 +12,18 @@ sed -i -e 's/^file=\/tmp/file=\/var\/run/' \
     /etc/supervisord.conf
 
 
-# cat >> /etc/supervisord.conf <<EOF
+cat >> /etc/supervisord.conf <<EOF
 
-# [program:mysqld]
-# user=root
-# command=/usr/bin/pidproxy /run/mysqld/mysqld.pid /usr/sbin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --pid-file=/run/mysqld/mysqld.pid
-# priority=1
-# autostart=true
-# autorestart=true
-# stdout_logfile=/xuexi/user/mysqld.log
-# stderr_logfile=/xuexi/user/mysqld.log
+[program:mysqld]
+user=root
+command=/usr/bin/pidproxy /run/mysqld/mysqld.pid /usr/sbin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --pid-file=/run/mysqld/mysqld.pid
+priority=1
+autostart=true
+autorestart=true
+stdout_logfile=/xuexi/user/mysqld.log
+stderr_logfile=/xuexi/user/mysqld.log
 
-# EOF
+EOF
 
 cat >> /etc/supervisord.conf <<EOF
 
