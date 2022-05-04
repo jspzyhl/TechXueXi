@@ -16,7 +16,7 @@ cat >> /etc/supervisord.conf <<EOF
 
 [program:mysqld]
 user=root
-command=/usr/bin/pidproxy /run/mysqld/mysqld.pid /usr/sbin/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --pid-file=/run/mysqld/mysqld.pid
+command=/usr/bin/pidproxy /run/mysqld/mysqld.pid /usr/sbin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin --pid-file=/run/mysqld/mysqld.pid
 priority=1
 autostart=true
 autorestart=true
