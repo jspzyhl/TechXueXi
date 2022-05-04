@@ -28,7 +28,9 @@ COPY requirements.txt /xuexi/requirements.txt
 COPY run.sh /xuexi/run.sh 
 COPY start.sh /xuexi/start.sh 
 COPY supervisor.sh /xuexi/supervisor.sh
+COPY run_mysql.sh /xuexi/run_mysql.sh 
 COPY db_init.sql /xuexi/db_init.sql
+
 
 RUN apt-get install -y lsb-release gnupg debconf-utils wait-for-it
 RUN { \
@@ -49,10 +51,11 @@ RUN { \
     export DEBIAN_FRONTEND=noninteractive && \
     dpkg -i mysql-apt-config*.deb && \
     apt-get update && \
-    apt install -y mysql-community-server && \
-    /usr/sbin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib/mysql/plugin > /dev/null & && \
-    wait-for-it -t 0 localhost:3306 -- echo "mysql is up" && \
-    mysql -h localhost -u root -p1234 < ./db_init.sql
+    apt install -y mysql-community-server
+
+RUN chmod 777 /xuexi/run_mysql.sh && \
+    /xuexi/run_mysql.sh && \
+    mysql -h localhost -u root -p1234 < /xuexi/db_init.sql
 
 RUN pip install -r /xuexi/requirements.txt
 RUN cd /xuexi/; \
