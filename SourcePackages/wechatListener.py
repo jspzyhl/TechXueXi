@@ -275,14 +275,21 @@ def is_valid_user(openid_: str) -> bool:
 
 def login_xx(url_, post_dat_):
     try:
-        respon_ = requests.post(url=url_, data=json.dumps(post_dat_), timeout=270).json()
-        login_result_ = respon_['login_result']
-        if login_result_ == 'success':
-            print("登录成功")
-        elif login_result_ == 'auth_code':
-            print('需要验证，请发送“/authcode 验证码” 提交短信验证码')
+        requests.post(url=url_, data=json.dumps(post_dat_), timeout=270)
+    # login_result_ = respon_['login_result']
+    # if login_result_ == 'success':
+    #     print("登录成功")
+    # elif login_result_ == 'auth_code':
+    #     print('需要验证，请发送“/authcode 验证码” 提交短信验证码')
     except Exception as e:
         print('登录失败，出现错误。')
+
+
+def logout_xx(url_, post_dat_):
+    try:
+        requests.post(url=url_, data=json.dumps(post_dat_), timeout=270)
+    except Exception as e:
+        print('注销失败，出现错误。')
 
 
 def wechat_login(msg: MessageInfo):
@@ -295,18 +302,37 @@ def wechat_login(msg: MessageInfo):
             phonenum_ = args[1]
             password_ = args[2]
             if len(auto_login_host) > 0:
-                url_ = auto_login_host + '/xx/add_account'
+                url_ = auto_login_host + '/xx/login_account'
 
                 post_dat_ = {'phonenum': phonenum_,
                              'password': password_,
                              'openid': msg.from_user_name,
+                             'appid': appid,
                              }
                 Thread(name='login_xx', target=login_xx, args=[url_, post_dat_]).start()
                 return None
             else:
-                return msg.returnXml('登录失败，未设置自动登录服务')
+                return msg.returnXml('命令执行失败，未设置自动登录服务')
         else:
             return msg.returnXml("参数格式错误，正确格式：“/login 手机号码 密码”")
+    else:
+        return msg.returnXml("当前微信号没有执行此命令的权限，请联系管理员授权")
+
+
+def wechat_logout(msg: MessageInfo):
+    """
+    注销xx账号
+    """
+    if is_valid_user(msg.from_user_name):
+        if len(auto_login_host) > 0:
+            url_ = auto_login_host + '/xx/logout_account'
+            post_dat_ = {'openid': msg.from_user_name,
+                         'appid': appid,
+                         }
+            Thread(name='login_xx', target=logout_xx, args=[url_, post_dat_]).start()
+            return None
+        else:
+            return msg.returnXml('命令执行失败，未设置自动登录服务')
     else:
         return msg.returnXml("当前微信号没有执行此命令的权限，请联系管理员授权")
 
@@ -406,6 +432,10 @@ def weixinInterface():
                 #     MyThread("wechat_update", wechat_update, msg).start()
                 if msg.content.startswith("/login"):
                     msg_ = wechat_login(msg)
+                    if msg_:
+                        return msg_
+                if msg.content.startswith("/logout"):
+                    msg_ = wechat_logout(msg)
                     if msg_:
                         return msg_
                 if msg.content.startswith("/authcode"):
