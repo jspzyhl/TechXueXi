@@ -347,7 +347,7 @@ def wechat_authcode(msg: MessageInfo):
         if len(auto_login_host) > 0:
             url_ = auto_login_host + '/xx/set_auth_code'
 
-            post_dat_ = {'auth_code': authcode_,
+            post_dat_ = {'authcode': authcode_,
                          'openid': msg.from_user_name,
                          }
             try:
